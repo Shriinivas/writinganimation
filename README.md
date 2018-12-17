@@ -4,10 +4,10 @@ Supported Blender version<br>
 2.79b (Script File - writinganim.py) <br>
 
 # Installation
-Download writinganim.py, open Blender and select File->User Preferences <br>
-Click install Add-ons tab and then Install Add-on from File<br>
-Select the downloaded file <br>
-Check the 'Create Writing Animation' option in the add-ons dialog <br>
+- Download writinganim.py, open Blender and select File->User Preferences <br>
+- Click install Add-ons tab and then Install Add-on from File<br>
+- Select the downloaded file <br>
+- Check the 'Create Writing Animation' option in the add-ons dialog <br>
 
 After installation, a new 'Writing Animation' tab is displayed on the tools panel in object mode.
 
