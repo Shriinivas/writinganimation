@@ -14,7 +14,7 @@ After installation, a new 'Writing Animation' tab is displayed on the tools pane
 # Quick start
 Select the bezier curves, enter startig frame and length of the animation and click 'Create Writing Animation'<br>
 
-<a href=https://youtu.be/_tATQJhAkIg> The introductory video</a> provides a detailed overview of the add-on functionality
+<a href=https://youtu.be/_tATQJhAkIg> The introductory video</a> provides a detailed overview of the add-on functionality and various options available
 
 # Limitations
 Exercise caution when using this add-on in production as it's in beta stage<br>
