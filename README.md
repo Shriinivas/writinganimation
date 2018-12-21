@@ -1,4 +1,4 @@
-# Blender Add-on for Generating Writing Animation (to be released on Dec 21)<br>
+# Blender Add-on for Generating Writing Animation<br>
 This add-on generates writing animation for the selected Bezier curves in blender <br><br>
 Supported Blender version<br>
 2.79b (Script File - writinganim.py) <br>
