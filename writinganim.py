@@ -37,6 +37,7 @@ class DrawableCurve:
     def __init__(self, curveObj, objType = OBJTYPE_NONMODIFIER):
             
         self.bCurveObj = curveObj
+        self.scale = curveObj.scale[:]        
         curveCopyData = curveObj.data.copy()
 
         #Non-zero values of the following attributes impacts length
@@ -597,28 +598,19 @@ def getCurveDCObjs(selObjs, objType, defaultDepth, retain, copyPropObj, group = 
 
 def showOrigCurve(zeroFrameCurveDCObjs, zeroFrameOrigCurves, currFrame, retain):
     for i, origCurve in enumerate(zeroFrameOrigCurves):
-        origCurve.hide = True
-        origCurve.hide_render = True
-        insertKF(obj = origCurve, dataPath = 'hide', frame = (currFrame-1))        
-        insertKF(obj = origCurve, dataPath = 'hide_render', frame = (currFrame-1))        
-        origCurve.hide = False
-        origCurve.hide_render = False
-        insertKF(obj = origCurve, dataPath = 'hide', frame = (currFrame))
-        insertKF(obj = origCurve, dataPath = 'hide_render', frame = (currFrame))
 
+        origCurve.scale = [0,0,0]
+        insertKF(obj = origCurve, dataPath = 'scale', frame = (currFrame-1))        
+
+        origCurve.scale = zeroFrameCurveDCObjs[i][0].scale[:]
+        insertKF(obj = origCurve, dataPath = 'scale', frame = (currFrame))        
+        
         if(retain != 'Both'):
             for dcObj in zeroFrameCurveDCObjs[i]:
-                dcObj.bCurveObj.hide = False
-                dcObj.bCurveObj.hide_render = False
-                insertKF(obj = dcObj.bCurveObj, dataPath = 'hide', 
-                    frame = (currFrame - 1))
-                insertKF(obj = dcObj.bCurveObj, dataPath = 'hide_render', 
-                    frame = (currFrame - 1))
-                dcObj.bCurveObj.hide = True
-                dcObj.bCurveObj.hide_render = True
-                insertKF(obj = dcObj.bCurveObj, dataPath = 'hide', frame = currFrame)
-                insertKF(obj = dcObj.bCurveObj, dataPath = 'hide_render', 
-                    frame = currFrame)
+                dcObj.bCurveObj.scale = dcObj.scale[:]
+                insertKF(obj = dcObj.bCurveObj, dataPath = 'scale', frame = (currFrame-1))        
+                dcObj.bCurveObj.scale = [0,0,0]
+                insertKF(obj = dcObj.bCurveObj, dataPath = 'scale', frame = (currFrame))        
 
 #TODO: Find a better way to calculate frame count proportional to the length
 def getFrameCntForLength(totalFrames, totalLength, remainingLength, 
@@ -631,7 +623,7 @@ def main(retain, defaultDepth, startFrame, totalFrames,
         copyPropObj, customWriter, reverseLift, resetLocation):
 
     selObjs = [o for o in bpy.data.objects if o in bpy.context.selected_objects
-        and o != customWriter]
+        and o != customWriter and isBezier(o)]
         
     # ~ selObjs = bpy.context.selected_objects[:]    #sequence incorrect
     group = bpy.data.groups.new(NEW_DATA_PREFIX+'Group')
