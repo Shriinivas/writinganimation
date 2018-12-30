@@ -18,6 +18,8 @@ Select the bezier curves, enter startig frame and length of the animation and cl
 <a href=https://youtu.be/_tATQJhAkIg> The introductory video</a> provides a detailed overview of the add-on functionality and various options available
 
 # Limitations
+If you undo the generate animation operation, the eye dropper selections made previously in 'Properties of' and 'Custom Writer'  options do not function consistently. So after undoing, even if these options show some values, you will have to select the corresponding objects once again (if they were selected before undoing). I am trying to find the root cause.<br>
+
 Exercise caution when using this add-on in production as it's in beta stage<br>
 
 # License
