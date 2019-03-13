@@ -936,7 +936,8 @@ class SeparateSplinesObjsOp(bpy.types.Operator):
                     spline, forceNoncyclic = False)
                 for collection in collections:
                     collection.objects.link(objCopy)
-                if(obj.name in bpy.context.scene.collection.objects):
+                if(obj.name in bpy.context.scene.collection.objects and \
+                    objCopy.name not in bpy.context.scene.collection.objects):
                     bpy.context.scene.collection.objects.link(objCopy)
             for collection in collections:
                 collection.objects.unlink(obj)
