@@ -961,7 +961,7 @@ bl_info = {
 
 class CreateWritingAnimPanel(bpy.types.Panel):    
     bl_label = "Writing Animation"
-    bl_idname = "object.writinganim"
+    bl_idname = "CURVE_PT_writinganim"
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = '.objectmode'
