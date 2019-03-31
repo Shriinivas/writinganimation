@@ -2,6 +2,8 @@
 # This Blender add-on creates writing animation for the selected Bezier curves
 # Supported Blender Version: 2.8 Beta
 #
+# Copyright (C) 2018  Shrinivas Kulkarni
+#
 # License: MIT (https://github.com/Shriinivas/writinganimation/blob/master/LICENSE)
 #
 
@@ -955,6 +957,8 @@ class SeparateSplinesObjsOp(bpy.types.Operator):
 
 bl_info = {
     "name": "Create Writing Animation",
+    "author": "Shrinivas Kulkarni",
+    "location": "Properties > Active Tool and Workspace Settings > Assign Shape Keys",
     "category": "Animation",
     "blender": (2, 80, 0),    
 }
