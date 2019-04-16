@@ -350,7 +350,7 @@ def createPencil(name, co, segs = 12, tipDepth = .1, height = 1, diameter = .033
                 defNode = mat.node_tree.nodes[1]
                 defNode.inputs[0].default_value = colorVal
             elif(bpy.context.scene.render.engine == 'BLENDER_EEVEE'):
-                mat.diffuse_color = colorVal[:-1]
+                mat.diffuse_color = colorVal
         else:
             mat = bpy.data.materials[matName]
         obj.data.materials.append(mat)
