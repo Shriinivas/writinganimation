@@ -3,10 +3,19 @@
 This add-on generates writing animation for the selected Bezier curves in blender <br><br>
 Supported Blender versions<br>
 2.8 beta (Script File - writinganim_2_8.py) <br>
+2.8 beta (Zip with integrated Stroke Font add-on - writinganimstrokefont_2_8.zip) <br>
+
 2.79b (Script File - writinganim.py) <br>
 
 # Installation
-- Download writinganim.py, open Blender and select File->User Preferences <br>
+<b>To install only the writing animation:<br></b>
+- download writinganim_2_8.py
+
+<b>To install writing animation integrated with stroke font for text animation:<br></b>
+- download writinganimstrokefont_2_8.zip
+
+<b>Common Steps:</b>
+- Open Blender and select File->User Preferences <br>
 - Click install Add-ons tab and then Install Add-on from File<br>
 - Select the downloaded file <br>
 - Check the 'Create Writing Animation' option in the add-ons dialog <br>
@@ -16,7 +25,11 @@ After installation, a new 'Writing Animation' tab is displayed in object mode. I
 # Quick start
 Select the bezier curves, enter startig frame and length of the animation and click 'Create Writing Animation'<br>
 
-<a href=https://youtu.be/_tATQJhAkIg> The introductory video</a> provides a detailed overview of the add-on functionality and various options available
+<a href=https://youtu.be/_tATQJhAkIg> The introductory video</a> provides a detailed overview of the add-on functionality and various options available. Additionally <a href=https://youtu.be/s2BIh-jV8XE>this video tutorial</a> covers a detailed usage example.
+
+If you have installed the integrated zip (available only for Blender 2.8), there will be an additional option 'Animate' at the top. Selecting 'Text' in this drop down will display text specific options below. You can enter the text to be animated in the text input box and taylor other option values to create a text writing animation.
+
+Please refer to <a href=https://youtu.be/WZVMPuyfYTM> this video </a> for more details on the automated text writing  animation.
 
 # Limitations
 If you undo the generate animation operation, the eye dropper selections made previously in 'Properties of' and 'Custom Writer'  options do not function consistently. So after undoing, even if these options show some values, you will have to select the corresponding objects once again (if they were selected before undoing). I am trying to find the root cause.<br>
