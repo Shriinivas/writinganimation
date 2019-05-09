@@ -12,7 +12,7 @@
 import bpy
 import bmesh
 
-from bpy.props import IntProperty, FloatProperty, BoolProperty
+from bpy.props import IntProperty, FloatProperty, BoolProperty, StringProperty
 from bpy.props import EnumProperty, PointerProperty
 from mathutils import Vector, Euler, Quaternion
 from math import radians, floor, ceil
@@ -90,7 +90,8 @@ class DrawableCurve:
 
         #TODO: copying the object also copies the old bbox;
         #find a way to force recalculation
-        
+        #soln: bpy.context.scene.update()???
+
         # ~ worldBBox = []
         # ~ for val in self.bCurveObj.bound_box:
             # ~ worldBBox.append(mw * Vector((val[0], val[1], val[2])))
@@ -791,6 +792,13 @@ def main(retain, defaultDepth, startFrame, totalFrames,
 
     return currFrame
 
+def isAddTextAvailable():
+    try:
+        from addstrokefont_2_8.strokefontmain import getfontNameList, addText
+        return True
+    except Exception as e:
+        print(e)
+        return False
 
 class CreateWritingAnimParams(bpy.types.PropertyGroup):
     retain : EnumProperty(name="Retain", 
@@ -809,7 +817,7 @@ class CreateWritingAnimParams(bpy.types.PropertyGroup):
             name = "Length",
             description = "Total Animation Frames",
             min = 1,
-            default = 1000)
+            default = 500)
 
     transitionSpeed : FloatProperty(
             name = "Speed",
@@ -864,6 +872,29 @@ class CreateWritingAnimParams(bpy.types.PropertyGroup):
             description = "Custom Object To Be Used As Writer",
             type = bpy.types.Object)
             
+    if(isAddTextAvailable()):
+        #TODO: Why this is needed two times?
+        from addstrokefont_2_8.strokefontmain import getfontNameList, addText
+        
+        animate : EnumProperty(name="Animate", 
+            items = [('selCurves', 'Selected Curves', "Create animation for selected curves"), \
+                ('text', 'Text', "Create animation for stroke font text")], 
+                default = 'text',
+                description='Generate drawing animation for selected curves or text')
+                
+        text : StringProperty(name = "Text", default = 'Hello\nWorld!', description = 'Text to add')
+        
+        fontName : EnumProperty(name = "Font", description='Text Font', items = getfontNameList)    
+        
+        fontSize : FloatProperty(name = "Font Size", description = 'Text Font Size', default = 0.25)
+        
+        charSpacing : FloatProperty(name = "Char Spacing", \
+            description='Spacing between characters', default = 1)
+            
+        lineSpacing : FloatProperty(name = "Line Spacing", \
+            description='Spacing between lines', default = 1)
+
+
 class CreateWritingAnimOp(bpy.types.Operator):
 
     bl_idname = "object.create_writing_anim"
@@ -874,28 +905,34 @@ class CreateWritingAnimOp(bpy.types.Operator):
 
     def execute(self, context):
         CreateWritingAnimOp.keyframeCnt = 0 
+        params = context.window_manager.createWritingAnimParams
         
-        retain = context.window_manager.createWritingAnimParams.retain
-        startFrame = context.window_manager.createWritingAnimParams.startFrame
-        totalFrames = context.window_manager.createWritingAnimParams.totalFrames
-        transitionSpeed = context.window_manager.createWritingAnimParams.transitionSpeed
-        liftAxis = int(context.window_manager.createWritingAnimParams.liftAxis)
-        maxLift = context.window_manager.createWritingAnimParams.maxLift
-        alignToVert = context.window_manager.createWritingAnimParams.alignToVert
-        proportionalLift = context.window_manager.createWritingAnimParams.proportionalLift
-        reverseLift = context.window_manager.createWritingAnimParams.reverseLift
-        animType = context.window_manager.createWritingAnimParams.animType
-        copyPropObj = context.window_manager.createWritingAnimParams.copyPropertiesCurve
-        customWriter = context.window_manager.createWritingAnimParams.customWriter
-        resetLocation = context.window_manager.createWritingAnimParams.resetLocation
+        retain = params.retain
+        startFrame = params.startFrame
+        totalFrames = params.totalFrames
+        transitionSpeed = params.transitionSpeed
+        liftAxis = int(params.liftAxis)
+        maxLift = params.maxLift
+        alignToVert = params.alignToVert
+        proportionalLift = params.proportionalLift
+        reverseLift = params.reverseLift
+        animType = params.animType
+        copyPropObj = params.copyPropertiesCurve
+        customWriter = params.customWriter
+        resetLocation = params.resetLocation
         
         if(copyPropObj == None or not hasattr(copyPropObj, 'type') or \
             copyPropObj.type not in(['CURVE','MESH'])):
             copyPropObj = None
-        if(customWriter == None or not hasattr(customWriter, 'type') or \
-            customWriter.type not in(['CURVE','MESH'])):
-            customWriter = None
             
+        textColl = None
+        if(hasattr(params, 'animate') and params.animate == 'text'):
+            textColl = createText(context, copyPropObj)
+            alignToVert = False            
+            animType = OBJTYPE_NONMODIFIER
+            retain = 'Copy'
+            liftAxis = 2 #Z in case of text
+    
         endFrame = main(retain, DEFAULT_DEPTH, startFrame, totalFrames,
             liftAxis, maxLift, transitionSpeed, alignToVert, proportionalLift, animType, 
                 copyPropObj, customWriter, reverseLift, resetLocation)
@@ -903,10 +940,46 @@ class CreateWritingAnimOp(bpy.types.Operator):
         if(endFrame < 0):
             self.report({'WARNING'}, "No Curve Objects Selected to Create Animation")
         else:
-            self.report({'INFO'}, "Created "+
+            self.report({'INFO'}, "Created " + 
                 str(CreateWritingAnimOp.keyframeCnt)+ " new keyframes")
-            
+                
+        if(textColl != None):
+            textObjs = textColl.objects[:]
+            for o in textObjs:
+                if(o.type == 'CURVE'):
+                    textColl.objects.unlink(o)
+                    bpy.data.curves.remove(o.data)#TODO: Also removes object?
+            bpy.context.scene.collection.children.unlink(textColl)
+            bpy.data.collections.remove(textColl)
+
         return {'FINISHED'}
+
+def createText(context, copyPropObj):
+    stParams = context.window_manager.createWritingAnimParams
+    
+    fontName = stParams.fontName
+    fontSize = stParams.fontSize
+    charSpacing = stParams.charSpacing
+    lineSpacing = stParams.lineSpacing
+    text = stParams.text
+
+    #TODO: Why this is needed again?
+    from addstrokefont_2_8.strokefontmain import getFontNames, addText
+    collection = addText(fontName, fontSize, charSpacing, lineSpacing, copyPropObj, \
+        text, cloneGlyphs = False)
+        
+    for o in bpy.data.objects:
+        try:
+            o.select_set(False)
+        except:
+            pass
+        
+    for o in collection.all_objects:
+        o.select_set(True)
+
+    context.scene.update()
+    
+    return collection
 
 class SeparateSplinesObjsOp(bpy.types.Operator):
 
@@ -969,8 +1042,10 @@ class CreateWritingAnimPanel(bpy.types.Panel):
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = '.objectmode'
-        
+    
     def draw(self, context):
+        params = bpy.context.window_manager.createWritingAnimParams
+        
         layout = self.layout
         layout.use_property_split = True
 
@@ -978,41 +1053,50 @@ class CreateWritingAnimPanel(bpy.types.Panel):
         col = layout.column()
 
         col.operator("object.separate_splines")
-
+        
         col.separator()
         col.label(text="Animation", icon="ANIM")
-
-        col.prop(context.window_manager.createWritingAnimParams, "animType")
-
-        col.prop(context.window_manager.createWritingAnimParams, "startFrame")
-
-        col.prop(context.window_manager.createWritingAnimParams, "totalFrames")
-
-        col.prop(context.window_manager.createWritingAnimParams, "retain")
-
-        col.prop(context.window_manager.createWritingAnimParams, "copyPropertiesCurve")
+        
+        if(hasattr(params, 'animate')):
+            col.prop(params, "animate")
+        
+            if(params.animate == 'text'):
+                col.prop(params, 'text')
+                col.prop(params, 'fontName')
+                col.prop(params, 'fontSize')
+                col.prop(params, 'charSpacing')
+                col.prop(params, 'lineSpacing')
+                
+        if(not hasattr(params, 'animate') or params.animate != 'text'):
+            col.prop(params, 'animType')
+            col.prop(params, "retain")
+                
+        col.prop(params, "startFrame")
+        col.prop(params, "totalFrames")
+        col.prop(params, "copyPropertiesCurve")
 
         col.separator()
         col.label(text="Transition", icon="ARROW_LEFTRIGHT")
 
-        col.prop(context.window_manager.createWritingAnimParams, "transitionSpeed")
-
-        col.prop(context.window_manager.createWritingAnimParams, "maxLift")
-
-        col.prop(context.window_manager.createWritingAnimParams, "liftAxis")        
-
-        col.prop(context.window_manager.createWritingAnimParams, "proportionalLift")
+        col.prop(params, "transitionSpeed")
+        col.prop(params, "maxLift")
         
-        col.prop(context.window_manager.createWritingAnimParams, "reverseLift")
+        #Always Z in case of text
+        if(not hasattr(params, 'animate') or params.animate != 'text'):
+            col.prop(params, "liftAxis")
+            
+        col.prop(params, "proportionalLift")
+        col.prop(params, "reverseLift")
 
         col.separator()
         col.label(text="Writer", icon="GREASEPENCIL")
 
-        col.prop(context.window_manager.createWritingAnimParams, "alignToVert")
+        if(not hasattr(params, 'animate') or params.animate != 'text'):
+            col.prop(params, "alignToVert")
 
-        col.prop(context.window_manager.createWritingAnimParams, "customWriter")
+        col.prop(params, "customWriter")
         
-        col.prop(context.window_manager.createWritingAnimParams, "resetLocation")
+        col.prop(params, "resetLocation")
 
         col.separator()
         col.operator("object.create_writing_anim")
