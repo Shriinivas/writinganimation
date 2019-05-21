@@ -33,7 +33,8 @@ If you have installed the integrated zip (available only for Blender 2.8), there
 Please refer to <a href=https://youtu.be/WZVMPuyfYTM> this video </a> for more details on the automated text writing  animation.
 
 # Limitations
-If you undo the generate animation operation, the eye dropper selections made previously in 'Properties of' and 'Custom Writer'  options do not function consistently. So after undoing, even if these options show some values, you will have to select the corresponding objects once again (if they were selected before undoing). I am trying to find the root cause.<br>
+If you undo the generate animation operation, the eye dropper selections made previously in 'Properties of' and 'Custom Writer'  options do not function consistently. So after undoing, even if these options show some values, you will have to select the corresponding objects once again (if they were selected before undoing).<br><br>
+For curves with modifiers, sometimes the writer and curve are not in sync due to some error in length calculation (root cause still unknown). A workaround for this is to split the curves into a number of smaller segments (refer to the usage example above).
 
 Exercise caution when using this add-on in production as it's in alpha stage<br>
 
