@@ -4,6 +4,7 @@ This add-on generates writing animation for the selected Bezier curves in blende
 Supported Blender versions<br>
 2.8 beta (Script File - writinganim_2_8.py) <br>
 2.8 beta (Zip with integrated Stroke Font add-on - writinganimstrokefont_2_8.zip) <br>
+<b>(please make sure you have a build downloaded after May 19, 2019) </b><br>
 
 2.79b (Script File - writinganim.py) <br>
 
