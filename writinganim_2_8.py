@@ -49,32 +49,37 @@ class DrawableCurve:
 
         curveCopyObj = curveObj.copy()
         curveCopyObj.data = curveCopyData
+        bpy.context.scene.collection.objects.link(curveCopyObj)
 
-        apply_modifiers = (objType == OBJTYPE_MODIFIER)
+        if(objType == OBJTYPE_MODIFIER):
+            depsgraph = bpy.context.evaluated_depsgraph_get()
+            cmd = curveCopyObj.evaluated_get(depsgraph).to_mesh()
+        else:
+            cmd = curveCopyObj.to_mesh()
 
-        self.curveMeshData = curveCopyObj.to_mesh(depsgraph = bpy.context.depsgraph, \
-                apply_modifiers = apply_modifiers, calc_undeformed = False)
+        self.curvePts = [cmd.vertices[cmd.edges[0].vertices[0]].co.copy()]
+        self.curvePts += [cmd.vertices[e.vertices[1]].co.copy() for e in cmd.edges]
+            
+        bpy.context.scene.collection.objects.unlink(curveCopyObj)
+        bpy.data.objects.remove(curveCopyObj)
 
         #Convert co to world space and calculate length and approximate normal
         tmpBM = bmesh.new()
 
-        self.curveLength = 0
+        self.curveLength = 0#sum(s.calc_length() for s in curveObj.data.splines)
         self.mw = self.bCurveObj.matrix_world
 
-        for i in range(0, len(self.curveMeshData.vertices)):
-            self.curveMeshData.vertices[i].co = \
-                self.mw @ self.curveMeshData.vertices[i].co
+        for i in range(0, len(self.curvePts)):
+            self.curvePts[i] = self.mw @ self.curvePts[i]
 
             if(i > 0):
-                segLen = (self.curveMeshData.vertices[i].co - \
-                    self.curveMeshData.vertices[i-1].co).length
-
+                segLen = (self.curvePts[i] - self.curvePts[i-1]).length
                 self.curveLength += segLen
 
-            tmpBM.verts.new(self.curveMeshData.vertices[i].co)
+            tmpBM.verts.new(self.curvePts[i])
 
-        self.startCo = self.curveMeshData.vertices[0].co
-        self.endCo = self.curveMeshData.vertices[-1].co
+        self.startCo = self.curvePts[0]
+        self.endCo = self.curvePts[-1]
 
         tmpFace = tmpBM.faces.new(tmpBM.verts)
         tmpBM.faces.ensure_lookup_table()
@@ -87,20 +92,6 @@ class DrawableCurve:
             self.curveNormal = tmpFace.normal.copy()
         
         tmpBM.free()
-
-        #TODO: copying the object also copies the old bbox;
-        #find a way to force recalculation
-        #soln: bpy.context.scene.update()???
-
-        # ~ worldBBox = []
-        # ~ for val in self.bCurveObj.bound_box:
-            # ~ worldBBox.append(mw * Vector((val[0], val[1], val[2])))
-
-        #leftBot_rgtTop
-        # ~ self.bbox = [min(b[0] for b in worldBBox),
-                        # ~ min(b[1] for b in worldBBox),
-                        # ~ max(b[0] for b in worldBBox),
-                        # ~ max(b[1] for b in worldBBox)]
 
     def copySrcObjProps(copyObjData, newCurveData):
         
@@ -241,10 +232,10 @@ class ModifierDrawableCurve(DrawableCurve):
         totalLength = self.curveLength
 
         if(floatCmpWithMargin(totalLength, 0)):
-            return [self.curveMeshData.vertices[0].co] * numPts
+            return [self.curvePts[0]] * numPts
 
         segLen = totalLength / (numPts-1)
-        vertCos = [self.curveMeshData.vertices[0].co]
+        vertCos = [self.curvePts[0]]
         
         actualLen = 0
         vertIdx = 0
@@ -256,25 +247,25 @@ class ModifierDrawableCurve(DrawableCurve):
             while(not floatCmpWithMargin(actualLen, targetLen) 
                 and actualLen < targetLen):
                 
-                vert = self.curveMeshData.vertices[vertIdx]
+                vertCo = self.curvePts[vertIdx]
                 vertIdx += 1
-                nextVert = self.curveMeshData.vertices[vertIdx]
-                actualLen += (nextVert.co - vert.co).length
+                nextVertCo = self.curvePts[vertIdx]
+                actualLen += (nextVertCo - vertCo).length
 
             if(floatCmpWithMargin(actualLen, targetLen)):
-                co = self.curveMeshData.vertices[vertIdx].co
+                co = self.curvePts[vertIdx]
 
             else:   #interpolate
                 diff = actualLen - targetLen
-                co = (nextVert.co - (nextVert.co - vert.co) * \
-                    (diff/(nextVert.co - vert.co).length))
+                co = (nextVertCo - (nextVertCo - vertCo) * \
+                    (diff/(nextVertCo - vertCo).length))
 
                 #Revert to last pt
                 vertIdx -= 1
-                actualLen -= (nextVert.co - vert.co).length
+                actualLen -= (nextVertCo - vertCo).length
             vertCos.append(co)
 
-        vertCos.append(self.curveMeshData.vertices[-1].co)
+        vertCos.append(self.curvePts[-1])
         return vertCos
 
 def insertKF(obj, dataPath, frame):
@@ -292,7 +283,9 @@ def setInterpolationLinear(empty):
 def createEmptyWithInitKF(name, startFrame, initCo, initDirection, parentObjs, hide_viewport, group):    
     empty = bpy.data.objects.new(name, None)
     # ~ bpy.context.scene.collection.objects.link(empty) #In 2.8 add to group only
-    bpy.context.scene.update()
+    # ~ bpy.context.scene.update()
+    depsgraph = bpy.context.evaluated_depsgraph_get()
+    depsgraph.update()
     empty.hide_viewport = hide_viewport
 
 
@@ -392,7 +385,9 @@ def createPencil(name, co, segs = 12, tipDepth = .1, height = 1, diameter = .033
     mesh = bpy.data.meshes.new(name)
     pObj = bpy.data.objects.new(name, mesh)
     # ~ bpy.context.scene.collection.objects.link(pObj) #In 2.8 add to group only
-    bpy.context.scene.update()
+    # ~ bpy.context.scene.update()
+    depsgraph = bpy.context.evaluated_depsgraph_get()
+    depsgraph.update()
     bm.to_mesh(mesh)
     
     bodyColor = [0.00, 0.35, 0.44, 1.00]
@@ -823,7 +818,7 @@ class CreateWritingAnimParams(bpy.types.PropertyGroup):
             name = "Speed",
             description = "Speed of Writer During Lift (X Times Normal Speed)",
             min = 0.1,
-            default = 1.5)
+            default = 2)
 
     maxLift : FloatProperty(
             name = "Max Lift",
@@ -882,7 +877,7 @@ class CreateWritingAnimParams(bpy.types.PropertyGroup):
                 default = 'text',
                 description='Generate drawing animation for selected curves or text')
                 
-        text : StringProperty(name = "Text", default = 'Hello\nWorld!', description = 'Text to add')
+        text : StringProperty(name = "Text", default = 'Hello\\'+'nWorld!', description = 'Text to add')
         
         fontName : EnumProperty(name = "Font", description='Text Font', items = getfontNameList)    
         
@@ -977,7 +972,9 @@ def createText(context, copyPropObj):
     for o in collection.all_objects:
         o.select_set(True)
 
-    context.scene.update()
+    # ~ context.scene.update()
+    depsgraph = context.evaluated_depsgraph_get()
+    depsgraph.update()
     
     return collection
 
@@ -1031,7 +1028,7 @@ class SeparateSplinesObjsOp(bpy.types.Operator):
 bl_info = {
     "name": "Create Writing Animation",
     "author": "Shrinivas Kulkarni",
-    "location": "Properties > Active Tool and Workspace Settings > Assign Shape Keys",
+    "location": "Properties > Active Tool and Workspace Settings > Create Writing Animation",
     "category": "Animation",
     "blender": (2, 80, 0),    
 }
@@ -1039,8 +1036,11 @@ bl_info = {
 class CreateWritingAnimPanel(bpy.types.Panel):    
     bl_label = "Writing Animation"
     bl_idname = "CURVE_PT_writinganim"
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW'
+    # ~ bl_space_type = 'PROPERTIES'
+    # ~ bl_region_type = 'WINDOW'
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category = "Tool"
     bl_context = '.objectmode'
     
     def draw(self, context):
