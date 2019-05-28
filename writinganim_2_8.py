@@ -14,7 +14,7 @@ import bmesh
 
 from bpy.props import IntProperty, FloatProperty, BoolProperty, StringProperty
 from bpy.props import EnumProperty, PointerProperty
-from mathutils import Vector, Euler, Quaternion
+from mathutils import Vector, Euler, Quaternion, geometry
 from math import radians, floor, ceil
 from enum import Enum 
 
@@ -63,9 +63,6 @@ class DrawableCurve:
         bpy.context.scene.collection.objects.unlink(curveCopyObj)
         bpy.data.objects.remove(curveCopyObj)
 
-        #Convert co to world space and calculate length and approximate normal
-        tmpBM = bmesh.new()
-
         self.curveLength = 0#sum(s.calc_length() for s in curveObj.data.splines)
         self.mw = self.bCurveObj.matrix_world
 
@@ -76,23 +73,11 @@ class DrawableCurve:
                 segLen = (self.curvePts[i] - self.curvePts[i-1]).length
                 self.curveLength += segLen
 
-            tmpBM.verts.new(self.curvePts[i])
-
         self.startCo = self.curvePts[0]
         self.endCo = self.curvePts[-1]
 
-        tmpFace = tmpBM.faces.new(tmpBM.verts)
-        tmpBM.faces.ensure_lookup_table()
+        self.curveNormal = geometry.normal(self.curvePts)
         
-        #Normal of co-linear verts is not zero every time, so check area
-        if(floatCmpWithMargin(tmpFace.calc_area(), 0)):
-            self.curveNormal = Vector((0,0,0))
-        else:
-            tmpFace.normal_update()
-            self.curveNormal = tmpFace.normal.copy()
-        
-        tmpBM.free()
-
     def copySrcObjProps(copyObjData, newCurveData):
         
         #Copying just a few attributes        
