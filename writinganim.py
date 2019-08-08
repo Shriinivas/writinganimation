@@ -2,7 +2,7 @@
 # This Blender add-on creates writing animation for the selected Bezier curves
 # Supported Blender Version: 2.79b
 #
-# License: MIT (https://github.com/Shriinivas/writinganimation/blob/master/LICENSE)
+# License: GPL (https://github.com/Shriinivas/writinganimation/blob/master/LICENSE)
 #
 
 # Not yet pep8 compliant 
