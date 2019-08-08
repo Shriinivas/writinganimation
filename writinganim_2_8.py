@@ -4,7 +4,7 @@
 #
 # Copyright (C) 2018  Shrinivas Kulkarni
 #
-# License: MIT (https://github.com/Shriinivas/writinganimation/blob/master/LICENSE)
+# License: GPL (https://github.com/Shriinivas/writinganimation/blob/master/LICENSE)
 #
 
 # Not yet pep8 compliant 
