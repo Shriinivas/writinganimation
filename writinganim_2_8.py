@@ -871,6 +871,9 @@ class CreateWritingAnimParams(bpy.types.PropertyGroup):
         charSpacing : FloatProperty(name = "Char Spacing", \
             description='Spacing between characters', default = 1)
             
+        wordSpacing : FloatProperty(name = "Word Spacing", \
+            description='Spacing between words', default = 1)
+            
         lineSpacing : FloatProperty(name = "Line Spacing", \
             description='Spacing between lines', default = 1)
 
@@ -940,13 +943,14 @@ def createText(context, copyPropObj):
     fontName = stParams.fontName
     fontSize = stParams.fontSize
     charSpacing = stParams.charSpacing
+    wordSpacing = stParams.wordSpacing
     lineSpacing = stParams.lineSpacing
     text = stParams.text
 
     #TODO: Why this is needed again?
     from addstrokefont_2_8.strokefontmain import getFontNames, addText
-    collection = addText(fontName, fontSize, charSpacing, lineSpacing, copyPropObj, \
-        text, cloneGlyphs = False)
+    collection = addText(fontName, fontSize, charSpacing, wordSpacing, lineSpacing, \
+        copyPropObj, text, cloneGlyphs = False)
         
     for o in bpy.data.objects:
         try:
@@ -1050,6 +1054,7 @@ class CreateWritingAnimPanel(bpy.types.Panel):
                 col.prop(params, 'fontName')
                 col.prop(params, 'fontSize')
                 col.prop(params, 'charSpacing')
+                col.prop(params, 'wordSpacing')
                 col.prop(params, 'lineSpacing')
                 
         if(not hasattr(params, 'animate') or params.animate != 'text'):
