@@ -99,6 +99,8 @@ class DrawableCurve:
         newCurveData.extrude = copyObjData.extrude
         newCurveData.bevel_depth = copyObjData.bevel_depth
         newCurveData.bevel_resolution = copyObjData.bevel_resolution
+        newCurveData.bevel_object = copyObjData.bevel_object
+        newCurveData.taper_object = copyObjData.taper_object
         
         for material in copyObjData.materials:
             newCurveData.materials.append(material)
