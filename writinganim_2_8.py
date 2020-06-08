@@ -134,7 +134,7 @@ class DrawableCurve:
 
     #static method
     def getDCObjsForSpline(curveObj, objType, defaultDepth, nameStartIdx, 
-        group = None, copyPropObj = None):
+        group = None, copyPropObj = None, flatMat = None, bevelObj = None):
 
         #Nurbs curve excuded for now
         if(not isBezier(curveObj)):
@@ -156,21 +156,39 @@ class DrawableCurve:
                     mat = copyPropObj.data.materials[copyMatIdx]
                     if(len(copyData.materials) == 0 or 
                         mat.name not in copyData.materials):
-                            
                         copyData.materials.append(mat)
                         activeIdx = -1 #Last
                     else:
                         activeIdx = copyData.materials.find(mat.name)
         else:
             DrawableCurve.copySrcObjProps(curveObj.data, copyData)
-
+            if(flatMat != None):
+                # TODO: Import only once
+                from addstrokefont_2_8.strokefontmain import copyObjAttr
+                copyData.materials.clear()
+                copyData.materials.append(flatMat)
+                for spline in curveObj.data.splines:
+                    bpts = spline.bezier_points
+                    for i in range(0, len(bpts)):
+                        bpts[i].handle_left_type = 'FREE'
+                        bpts[i].handle_right_type = 'FREE'
+                    bpts.add(1)
+                    ptCnt = len(bpts)
+                    for i in range(0, (ptCnt - 1)):
+                        idx = ptCnt - i - 2# reversed
+                        copyObjAttr(bpts[idx], bpts[idx + 1])
+                    bpts[0].handle_right = bpts[0].co.copy()
+                    bpts[1].handle_left = bpts[1].co.copy()
+                    copyData.twist_mode = 'MINIMUM'
+                    copyData.bevel_object = bevelObj
         dcObjs = []
         idSuffix = 0
         for i, spline in enumerate(curveObj.data.splines):
             
             dataCopy = copyData.copy()
             dataCopy.splines.clear()
-            DrawableCurve.createNoncyclicSpline(dataCopy, spline, forceNoncyclic = True)
+            DrawableCurve.createNoncyclicSpline(dataCopy, spline, \
+                forceNoncyclic = True)
             dataCopy.animation_data_clear()
 
             #Default settings
@@ -558,14 +576,15 @@ def getTransitionInfo(allDcObjs, liftAxis, maxLift, transitionSpeed,
 
         return transitionLengths, transitionLifts
 
-def getCurveDCObjs(selObjs, objType, defaultDepth, retain, copyPropObj, group = None):
+def getCurveDCObjs(selObjs, objType, defaultDepth, retain, copyPropObj, \
+    flatMat, bevelObj, group = None):
     curveDCObjs = []
 
     idx = 0    #Only for naming the new objects
 
     for obj in selObjs:
         dcObjs = DrawableCurve.getDCObjsForSpline(obj, objType, 
-            defaultDepth, idx, group, copyPropObj)
+            defaultDepth, idx, group, copyPropObj, flatMat, bevelObj)
 
         if(len(dcObjs) == 0 ):
             continue
@@ -604,7 +623,7 @@ def getFrameCntForLength(totalFrames, totalLength, remainingLength,
 
 def main(retain, defaultDepth, startFrame, totalFrames,
     liftAxis, maxLift, transitionSpeed, alignToVert, proportionalLift, objType, 
-        copyPropObj, customWriter, reverseLift, resetLocation):
+        copyPropObj, rgba, customWriter, reverseLift, resetLocation):
 
     selObjs = [o for o in bpy.data.objects if o in bpy.context.selected_objects
         and o != customWriter and isBezier(o)]
@@ -613,8 +632,15 @@ def main(retain, defaultDepth, startFrame, totalFrames,
     group = bpy.data.collections.new(NEW_DATA_PREFIX+'Collection')
     bpy.context.scene.collection.children.link(group)
 
+    if(isAddTextAvailable() and rgba != None):
+        from addstrokefont_2_8.strokefontmain import getFlatMat, createCircle, copyObjAttr
+        flatMat = getFlatMat('Flat Curves Material', rgba)
+        bevelObj = createCircle(defaultDepth * 5, group)
+    else:
+        flatMat, bevelObj = None, None
+
     curveDCObjs = getCurveDCObjs(selObjs, objType, defaultDepth, 
-        retain, copyPropObj, group)
+        retain, copyPropObj, flatMat, bevelObj, group)
 
     currFrame = -1
 
@@ -844,6 +870,14 @@ class CreateWritingAnimParams(bpy.types.PropertyGroup):
                 (OBJTYPE_MODIFIER, 'Location', "")], 
             default = OBJTYPE_MODIFIER)
             
+    isFlat: BoolProperty(name="Flat Curves (Experimental)", default = False, \
+        description='Render curves with zero thickness and rounded ends')
+
+    rgba: bpy.props.FloatVectorProperty(
+        name="Curve Color", subtype="COLOR", size=4, min=0.0, max=1.0,\
+        default=(.8, .8, .8, 1), description = 'Color of curve'
+    )
+
     copyPropertiesCurve : PointerProperty(
             name = 'Properties of', 
             description = "Copy Properties (Material, Bevel Depth etc.) of Object",
@@ -901,8 +935,13 @@ class CreateWritingAnimOp(bpy.types.Operator):
         alignToVert = params.alignToVert
         proportionalLift = params.proportionalLift
         reverseLift = params.reverseLift
-        animType = params.animType
+        isFlat = params.isFlat
         copyPropObj = params.copyPropertiesCurve
+        rgba = params.rgba
+        if(isFlat): copyPropObj = None
+        else: rgba = None
+        animType = params.animType if not isFlat else OBJTYPE_NONMODIFIER
+            
         customWriter = params.customWriter
         resetLocation = params.resetLocation
         
@@ -912,7 +951,7 @@ class CreateWritingAnimOp(bpy.types.Operator):
             
         textColl = None
         if(hasattr(params, 'animate') and params.animate == 'text'):
-            textColl = createText(context, copyPropObj)
+            textColl = createText(context, rgba, copyPropObj)
             alignToVert = False            
             animType = OBJTYPE_NONMODIFIER
             retain = 'Copy'
@@ -920,7 +959,7 @@ class CreateWritingAnimOp(bpy.types.Operator):
     
         endFrame = main(retain, DEFAULT_DEPTH, startFrame, totalFrames,
             liftAxis, maxLift, transitionSpeed, alignToVert, proportionalLift, animType, 
-                copyPropObj, customWriter, reverseLift, resetLocation)
+                copyPropObj, rgba, customWriter, reverseLift, resetLocation)
                 
         if(endFrame < 0):
             self.report({'WARNING'}, "No Curve Objects Selected to Create Animation")
@@ -939,7 +978,7 @@ class CreateWritingAnimOp(bpy.types.Operator):
 
         return {'FINISHED'}
 
-def createText(context, copyPropObj):
+def createText(context, rgba, copyPropObj):
     stParams = context.window_manager.createWritingAnimParams
     
     fontName = stParams.fontName
@@ -952,7 +991,7 @@ def createText(context, copyPropObj):
     #TODO: Why this is needed again?
     from addstrokefont_2_8.strokefontmain import getFontNames, addText
     collection = addText(fontName, fontSize, charSpacing, wordSpacing, lineSpacing, \
-        copyPropObj, text, cloneGlyphs = False)
+        copyPropObj, rgba, text, cloneGlyphs = False)
         
     for o in bpy.data.objects:
         try:
@@ -1059,13 +1098,21 @@ class CreateWritingAnimPanel(bpy.types.Panel):
                 col.prop(params, 'wordSpacing')
                 col.prop(params, 'lineSpacing')
                 
-        if(not hasattr(params, 'animate') or params.animate != 'text'):
-            col.prop(params, 'animType')
-            col.prop(params, "retain")
-                
         col.prop(params, "startFrame")
         col.prop(params, "totalFrames")
-        col.prop(params, "copyPropertiesCurve")
+        
+        if(isAddTextAvailable()):
+            col.prop(params, "isFlat")
+
+        if(not hasattr(params, 'animate') or params.animate != 'text'):
+            if(not params.isFlat):
+                col.prop(params, 'animType')
+            col.prop(params, "retain")
+                
+        if(params.isFlat):
+            col.prop(params, "rgba")
+        else:
+            col.prop(params, "copyPropertiesCurve")
 
         col.separator()
         col.label(text="Transition", icon="ARROW_LEFTRIGHT")
