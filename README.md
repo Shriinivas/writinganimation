@@ -2,19 +2,19 @@
 # Blender Add-on for Generating Writing Animation<br>
 This add-on generates writing animation for the selected Bezier curves in blender <br><br>
 Supported Blender versions<br>
-2.8 (Script File - writinganim_2_8.py) <br>
-2.8 (Zip with integrated Stroke Font add-on - writinganimstrokefont_2_8.zip) <br>
-2.79b (Script File - writinganim.py) <br>
+2.8x
+2.79b
 
 # Installation
-<b>To install only the writing animation:<br></b>
-- download writinganim_2_8.py for Blender Ver 2.8 or writinganim.py for Blender ver 2.79b
+<b>To install on 2.8x Blender (this comes integrated with stroke font text animation):<br></b>
+- Click on the Code button above the repository list
+- Download the zip file in a local folder
 
-<b>To install writing animation integrated with stroke font for text animation:<br></b>
-- download writinganimstrokefont_2_8.zip (only available for Blender ver 2.8)
+<b>To install on 2.79b (this is without stroke font text animation):<br></b>
+- download ver 2.79b
 
 <b>Common Steps:</b>
-- Open Blender and select File->User Preferences <br>
+- Open Blender and select Edit (or File in 2.79b)->User Preferences <br>
 - Click install Add-ons tab and then Install Add-on from File<br>
 - Select the downloaded file <br>
 - Check the 'Create Writing Animation' option in the add-ons dialog <br>
