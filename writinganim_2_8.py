@@ -164,7 +164,7 @@ class DrawableCurve:
             DrawableCurve.copySrcObjProps(curveObj.data, copyData)
             if(flatMat != None):
                 # TODO: Import only once
-                from addstrokefont_2_8.strokefontmain import copyObjAttr
+                from .addstrokefont_2_8.strokefontmain import copyObjAttr
                 copyData.materials.clear()
                 copyData.materials.append(flatMat)
                 for spline in curveObj.data.splines:
@@ -633,7 +633,7 @@ def main(retain, defaultDepth, startFrame, totalFrames,
     bpy.context.scene.collection.children.link(group)
 
     if(isAddTextAvailable() and rgba != None):
-        from addstrokefont_2_8.strokefontmain import getFlatMat, createCircle, copyObjAttr
+        from .addstrokefont_2_8.strokefontmain import getFlatMat, createCircle, copyObjAttr
         flatMat = getFlatMat('Flat Curves Material', rgba)
         bevelObj = createCircle(defaultDepth * 5, group)
     else:
@@ -802,7 +802,7 @@ def main(retain, defaultDepth, startFrame, totalFrames,
 
 def isAddTextAvailable():
     try:
-        from addstrokefont_2_8.strokefontmain import getfontNameList, addText
+        from .addstrokefont_2_8.strokefontmain import getfontNameList, addText
         return True
     except Exception as e:
         print(e)
@@ -890,7 +890,7 @@ class CreateWritingAnimParams(bpy.types.PropertyGroup):
             
     if(isAddTextAvailable()):
         #TODO: Why this is needed two times?
-        from addstrokefont_2_8.strokefontmain import getfontNameList, addText
+        from .addstrokefont_2_8.strokefontmain import getfontNameList, addText
         
         animate : EnumProperty(name="Animate", 
             items = [('selCurves', 'Selected Curves', "Create animation for selected curves"), \
@@ -989,7 +989,7 @@ def createText(context, rgba, copyPropObj):
     text = stParams.text
 
     #TODO: Why this is needed again?
-    from addstrokefont_2_8.strokefontmain import getFontNames, addText
+    from .addstrokefont_2_8.strokefontmain import getFontNames, addText
     collection = addText(fontName, fontSize, charSpacing, wordSpacing, lineSpacing, \
         copyPropObj, rgba, text, cloneGlyphs = False)
         
@@ -1055,13 +1055,14 @@ class SeparateSplinesObjsOp(bpy.types.Operator):
             
         return {'FINISHED'}
 
-bl_info = {
-    "name": "Create Writing Animation",
-    "author": "Shrinivas Kulkarni",
-    "location": "Properties > Active Tool and Workspace Settings > Create Writing Animation",
-    "category": "Animation",
-    "blender": (2, 80, 0),    
-}
+# Moved to __init__.py for making an installable zip
+# ~ bl_info = {
+    # ~ "name": "Create Writing Animation",
+    # ~ "author": "Shrinivas Kulkarni",
+    # ~ "location": "Properties > Active Tool and Workspace Settings > Create Writing Animation",
+    # ~ "category": "Animation",
+    # ~ "blender": (2, 80, 0),    
+# ~ }
 
 class CreateWritingAnimPanel(bpy.types.Panel):    
     bl_label = "Writing Animation"
