@@ -1,4 +1,4 @@
-![Demo](https://github.com/Shriinivas/writinganimation/blob/master/demo.gif)
+![Demo](https://github.com/Shriinivas/etc/blob/master/writinganimation/illustrations/demo.gif)
 # Blender Add-on for Generating Writing Animation<br>
 This add-on generates writing animation for the selected Bezier curves in blender <br><br>
 Supported Blender versions<br>
