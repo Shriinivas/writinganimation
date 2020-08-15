@@ -7,11 +7,13 @@ Supported Blender versions: <b>2.8x</b> and <b>2.79b</b> <br>
 <b>To install on 2.8x Blender (this comes integrated with stroke font text animation):<br></b>
 - Click on the Code button above the repository list
 - Download the zip file in a local folder
+- Follow the common steps below
 
 <b>To install on 2.79b (this is without stroke font text animation):<br></b>
 - Click on the writinganim.py link
 - Click on the Raw button above the code listing
 - Press control+s to save the file in a local folder
+- Follow the common steps below
 
 <b>Common Steps:</b>
 - Open Blender and select Edit (or File in 2.79b)->User Preferences <br>
