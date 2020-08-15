@@ -16,7 +16,7 @@ Supported Blender versions: <b>2.8x</b> and <b>2.79b</b> <br>
 - Follow the common steps below
 
 <b>Common Steps:</b>
-- Open Blender and select Edit (or File in 2.79b)->User Preferences <br>
+- Open Blender and select Edit (or File in 2.79b)->Preferences <br>
 - Click install Add-ons tab and then Install Add-on from File<br>
 - Select the downloaded file <br>
 - Check the 'Create Writing Animation' option in the add-ons dialog <br>
