@@ -7,7 +7,7 @@
 # License: GPL (https://github.com/Shriinivas/writinganimation/blob/master/LICENSE)
 #
 
-# Not yet pep8 compliant 
+# Not yet pep8 compliant
 
 import bpy
 import bmesh
@@ -16,7 +16,7 @@ from bpy.props import IntProperty, FloatProperty, BoolProperty, StringProperty
 from bpy.props import EnumProperty, PointerProperty
 from mathutils import Vector, Euler, Quaternion, geometry
 from math import radians, floor, ceil
-from enum import Enum 
+from enum import Enum
 
 DEF_ERR_MARGIN = 0.0001
 DEFAULT_DEPTH = 0.001
@@ -34,12 +34,12 @@ def vectCmpWithMargin(vect1, vect2, margin = DEF_ERR_MARGIN):
 def isBezier(bObj):
     return bObj.type == 'CURVE' and len(bObj.data.splines) > 0 \
         and bObj.data.splines[0].type == 'BEZIER'
-            
+
 class DrawableCurve:
     def __init__(self, curveObj, objType = OBJTYPE_NONMODIFIER):
-            
+
         self.bCurveObj = curveObj
-        self.scale = curveObj.scale[:]        
+        self.scale = curveObj.scale[:]
         curveCopyData = curveObj.data.copy()
 
         #Non-zero values of the following attributes impacts length
@@ -59,7 +59,7 @@ class DrawableCurve:
 
         self.curvePts = [cmd.vertices[cmd.edges[0].vertices[0]].co.copy()]
         self.curvePts += [cmd.vertices[e.vertices[1]].co.copy() for e in cmd.edges]
-            
+
         bpy.context.scene.collection.objects.unlink(curveCopyObj)
         bpy.data.objects.remove(curveCopyObj)
 
@@ -77,16 +77,16 @@ class DrawableCurve:
         self.endCo = self.curvePts[-1]
 
         self.curveNormal = geometry.normal(self.curvePts)
-        
+
     def copySrcObjProps(copyObjData, newCurveData):
-        
-        #Copying just a few attributes        
+
+        #Copying just a few attributes
         newCurveData.dimensions = copyObjData.dimensions
 
         newCurveData.resolution_u = copyObjData.resolution_u
-        newCurveData.render_resolution_u = copyObjData.render_resolution_u    
+        newCurveData.render_resolution_u = copyObjData.render_resolution_u
         newCurveData.fill_mode = copyObjData.fill_mode
-        
+
         newCurveData.use_fill_deform = copyObjData.use_fill_deform
         newCurveData.use_radius = copyObjData.use_radius
         newCurveData.use_stretch = copyObjData.use_stretch
@@ -94,14 +94,14 @@ class DrawableCurve:
 
         newCurveData.twist_smooth = copyObjData.twist_smooth
         newCurveData.twist_mode = copyObjData.twist_mode
-        
+
         newCurveData.offset = copyObjData.offset
         newCurveData.extrude = copyObjData.extrude
         newCurveData.bevel_depth = copyObjData.bevel_depth
         newCurveData.bevel_resolution = copyObjData.bevel_resolution
         newCurveData.bevel_object = copyObjData.bevel_object
         newCurveData.taper_object = copyObjData.taper_object
-        
+
         for material in copyObjData.materials:
             newCurveData.materials.append(material)
 
@@ -124,27 +124,27 @@ class DrawableCurve:
             spline.use_cyclic_u = srcSpline.use_cyclic_u
 
         for i in range(0, len(srcSpline.bezier_points)):
-            DrawableCurve.copyBezierPt(srcSpline.bezier_points[i], 
+            DrawableCurve.copyBezierPt(srcSpline.bezier_points[i],
                 spline.bezier_points[i])
 
         if(forceNoncyclic == True and srcSpline.use_cyclic_u == True):
             spline.bezier_points.add(1)
-            DrawableCurve.copyBezierPt(srcSpline.bezier_points[0], 
+            DrawableCurve.copyBezierPt(srcSpline.bezier_points[0],
                 spline.bezier_points[-1])
 
     #static method
-    def getDCObjsForSpline(curveObj, objType, defaultDepth, nameStartIdx, 
+    def getDCObjsForSpline(curveObj, objType, defaultDepth, nameStartIdx,
         group = None, copyPropObj = None, flatMat = None, bevelObj = None):
 
         #Nurbs curve excuded for now
         if(not isBezier(curveObj)):
             return []
-            
+
         activeIdx = None #Needed, because active_index is object (not data) attribute
 
         copyData = bpy.data.curves.new(NEW_DATA_PREFIX+'tmp', 'CURVE')
-        
-        if(copyPropObj != None):            
+
+        if(copyPropObj != None):
             #If object is bezier curve copy curve properties and material
             if(isBezier(copyPropObj)):
                 DrawableCurve.copySrcObjProps(copyPropObj.data, copyData)
@@ -154,7 +154,7 @@ class DrawableCurve:
                 if(len(copyPropObj.data.materials) > 0):
                     copyMatIdx = copyPropObj.active_material_index
                     mat = copyPropObj.data.materials[copyMatIdx]
-                    if(len(copyData.materials) == 0 or 
+                    if(len(copyData.materials) == 0 or
                         mat.name not in copyData.materials):
                         copyData.materials.append(mat)
                         activeIdx = -1 #Last
@@ -181,10 +181,12 @@ class DrawableCurve:
                     bpts[1].handle_left = bpts[1].co.copy()
                     copyData.twist_mode = 'MINIMUM'
                     copyData.bevel_object = bevelObj
+                    if(hasattr(copyData, 'bevel_mode')):
+                        copyData.bevel_mode = 'OBJECT'
         dcObjs = []
         idSuffix = 0
         for i, spline in enumerate(curveObj.data.splines):
-            
+
             dataCopy = copyData.copy()
             dataCopy.splines.clear()
             DrawableCurve.createNoncyclicSpline(dataCopy, spline, \
@@ -201,7 +203,7 @@ class DrawableCurve:
             objCopy = curveObj.copy()
             objCopy.name = curveObj.name + str(idSuffix).zfill(2)
             objCopy.data = dataCopy
-            
+
             if(dataCopy.shape_keys != None):
                 for i in range(0, len(dataCopy.shape_keys.key_blocks)):
                     objCopy.shape_key_remove(dataCopy.shape_keys.key_blocks[0])
@@ -214,17 +216,17 @@ class DrawableCurve:
                 dcObj = ModifierDrawableCurve(objCopy)
             else:
                 dcObj = DrawableCurve(objCopy)
-                
+
             if(activeIdx != None):
                 dcObj.active_material_index = activeIdx
-                
+
             dcObjs.append(dcObj)
 
             if(group != None):
                 group.objects.link(dcObj.bCurveObj)
 
         bpy.data.curves.remove(copyData)
-        
+
         return dcObjs
 
 class ModifierDrawableCurve(DrawableCurve):
@@ -241,17 +243,17 @@ class ModifierDrawableCurve(DrawableCurve):
 
         segLen = totalLength / (numPts-1)
         vertCos = [self.curvePts[0]]
-        
+
         actualLen = 0
         vertIdx = 0
 
         for i in range(1, numPts - 1):
             co = None
             targetLen = i * segLen
-            
-            while(not floatCmpWithMargin(actualLen, targetLen) 
+
+            while(not floatCmpWithMargin(actualLen, targetLen)
                 and actualLen < targetLen):
-                
+
                 vertCo = self.curvePts[vertIdx]
                 vertIdx += 1
                 nextVertCo = self.curvePts[vertIdx]
@@ -276,7 +278,7 @@ class ModifierDrawableCurve(DrawableCurve):
 def insertKF(obj, dataPath, frame):
     obj.keyframe_insert(data_path = dataPath, frame = frame)
     CreateWritingAnimOp.keyframeCnt += 1
-    
+
 #Needed in follow path constraint based animation
 def setInterpolationLinear(empty):
     fcs = empty.animation_data.action.fcurves
@@ -285,7 +287,7 @@ def setInterpolationLinear(empty):
             for k in fc.keyframe_points:
                  k.interpolation = 'LINEAR'
 
-def createEmptyWithInitKF(name, startFrame, initCo, initDirection, parentObjs, hide_viewport, group):    
+def createEmptyWithInitKF(name, startFrame, initCo, initDirection, parentObjs, hide_viewport, group):
     empty = bpy.data.objects.new(name, None)
     # ~ bpy.context.scene.collection.objects.link(empty) #In 2.8 add to group only
     # ~ bpy.context.scene.update()
@@ -323,13 +325,13 @@ def addCustomWriterKFs(customWriter, empty, startFrame, endFrame, resetLocation)
         customWriter.location = (0,0,0)
         insertKF(obj = customWriter, dataPath = 'location', frame = startFrame)
         insertKF(obj = customWriter, dataPath = 'location', frame = endFrame)
-    
+
     const = customWriter.constraints.new(type='CHILD_OF')
     const.target = empty
     const.name = NEW_DATA_PREFIX + 'Constraint'
     const.influence = 0
     insertKF(obj = const, dataPath = 'influence', frame = (startFrame - 1))
-    
+
     const.influence = 1
     insertKF(obj = const, dataPath = 'influence', frame = startFrame)
     insertKF(obj = const, dataPath = 'influence', frame = endFrame)
@@ -337,15 +339,15 @@ def addCustomWriterKFs(customWriter, empty, startFrame, endFrame, resetLocation)
     const.influence = 0
     insertKF(obj = const, dataPath = 'influence', frame = (endFrame + 1))
 
-def createPencil(name, co, segs = 12, tipDepth = .1, height = 1, diameter = .033, 
-        endTipPerc = 15, endTipDia = 0.0033, sharpCutOffset = 0.01, 
+def createPencil(name, co, segs = 12, tipDepth = .1, height = 1, diameter = .033,
+        endTipPerc = 15, endTipDia = 0.0033, sharpCutOffset = 0.01,
             tilt = 45, group = None):
-            
+
     def createMaterialNode(obj, colorVal, matName):
         if(bpy.data.materials.get(matName)== None):
             mat = bpy.data.materials.new(matName)
             if(bpy.context.scene.render.engine == 'CYCLES'):
-                mat.use_nodes = True            
+                mat.use_nodes = True
                 defNode = mat.node_tree.nodes[1]
                 defNode.inputs[0].default_value = colorVal
             elif(bpy.context.scene.render.engine == 'BLENDER_EEVEE'):
@@ -354,10 +356,10 @@ def createPencil(name, co, segs = 12, tipDepth = .1, height = 1, diameter = .033
             mat = bpy.data.materials[matName]
         obj.data.materials.append(mat)
         return mat
-        
+
     bm = bmesh.new()
-    bmesh.ops.create_cone(bm, cap_ends = True, segments = segs, 
-        depth = tipDepth * (100-endTipPerc)/100, diameter1 = endTipDia, 
+    bmesh.ops.create_cone(bm, cap_ends = True, segments = segs,
+        depth = tipDepth * (100-endTipPerc)/100, diameter1 = endTipDia,
             diameter2 = diameter)
 
     up = Vector((0, 0, 1))
@@ -366,7 +368,7 @@ def createPencil(name, co, segs = 12, tipDepth = .1, height = 1, diameter = .033
     topFace = [f for f in bm.faces if f.normal.angle(up) < radians(3)][0]
     oldFaces = [f for f in bm.faces]
     info = bmesh.ops.extrude_face_region(bm, geom=[topFace])
-    bmesh.ops.translate(bm, vec = Vector((0, 0, height)), 
+    bmesh.ops.translate(bm, vec = Vector((0, 0, height)),
         verts=[v for v in info["geom"] if isinstance(v, bmesh.types.BMVert)])
     for f in bm.faces:
         if (f not in oldFaces):
@@ -378,9 +380,9 @@ def createPencil(name, co, segs = 12, tipDepth = .1, height = 1, diameter = .033
     offsetVerts = [v for i, v in enumerate(topFace.verts) if i % 2 == 0]
     bmesh.ops.translate(bm, vec = (0, 0, sharpCutOffset), verts = offsetVerts)
 
-    info = bmesh.ops.create_cone(bm, cap_ends = True, segments = segs * 2, 
+    info = bmesh.ops.create_cone(bm, cap_ends = True, segments = segs * 2,
         depth = tipDepth * endTipPerc/100, diameter1 = 0, diameter2 = endTipDia)
-        
+
     bmesh.ops.translate(bm, vec = (0, 0, -tipDepth * .5), verts = info['verts'])
 
     for f in bm.faces:
@@ -394,21 +396,21 @@ def createPencil(name, co, segs = 12, tipDepth = .1, height = 1, diameter = .033
     depsgraph = bpy.context.evaluated_depsgraph_get()
     depsgraph.update()
     bm.to_mesh(mesh)
-    
+
     bodyColor = [0.00, 0.35, 0.44, 1.00]
     sharpenedTipColor = [0.80, 0.55, 0.09, 1.00]
     endTipColor = [0.00, 0.00, 0.00, 1.00]
     createMaterialNode(pObj, bodyColor, NEW_DATA_PREFIX+'BodyMat')
     createMaterialNode(pObj, sharpenedTipColor, NEW_DATA_PREFIX + 'Tip1Mat')
     createMaterialNode(pObj, endTipColor, NEW_DATA_PREFIX + 'Tip2Mat')
-    
+
     #pObj.data.uv_textures.new() # 2.8 Changed?
 
     for vert in mesh.vertices:
         vert.co.z += (tipDepth + tipDepth * endTipPerc/100) / 2
 
     pObj.rotation_euler = Euler((radians(tilt), 0,0), 'XYZ')
-    
+
     if(group != None):
         group.objects.link(pObj)
 
@@ -420,7 +422,7 @@ def createKfs(empty, dcObj, startFrame, curveFrameCnt, alignToVert, objType):
 
     curveObj.data.bevel_factor_end = 0
     insertKF(obj = curveObj.data, dataPath = 'bevel_factor_end', frame = startFrame)
-    
+
     currFrame = startFrame
 
     if(objType == OBJTYPE_NONMODIFIER):
@@ -428,15 +430,15 @@ def createKfs(empty, dcObj, startFrame, curveFrameCnt, alignToVert, objType):
         if(curveFrameCnt > 1):
             if(alignToVert):
                 empty.rotation_euler = dcObj.mw.to_euler()
-            insertKF(obj = empty, dataPath = 'rotation_euler', frame = startFrame)                
-            insertKF(obj = empty, dataPath = 'location', frame = startFrame)                
+            insertKF(obj = empty, dataPath = 'rotation_euler', frame = startFrame)
+            insertKF(obj = empty, dataPath = 'location', frame = startFrame)
 
             if(not alignToVert):
                 empty.rotation_euler = dcObj.mw.inverted().to_euler()
             else:
                 empty.rotation_euler = empty.matrix_world.inverted().to_euler()
-                
-            insertKF(obj = empty, dataPath = 'rotation_euler', frame = (startFrame + 1))                
+
+            insertKF(obj = empty, dataPath = 'rotation_euler', frame = (startFrame + 1))
             empty.location = [0,0,0]
             insertKF(obj = empty, dataPath = 'location', frame = (startFrame + 1))
 
@@ -471,7 +473,7 @@ def createKfs(empty, dcObj, startFrame, curveFrameCnt, alignToVert, objType):
 
         empty.location = dcObj.endCo
         insertKF(obj = empty, dataPath = 'location', frame = (startFrame + curveFrameCnt))
-        
+
         if(not alignToVert):
             empty.rotation_euler = oldRot
         else:
@@ -482,8 +484,8 @@ def createKfs(empty, dcObj, startFrame, curveFrameCnt, alignToVert, objType):
 
     else:
         objCos = dcObj.getInterpolatedVertsCo(curveFrameCnt + 1)
-                
-        if(alignToVert):            
+
+        if(alignToVert):
             oldRot = empty.rotation_quaternion
             rotate = dcObj.curveNormal.rotation_difference(empty.matrix_world.to_euler())
             empty.rotation_quaternion = rotate
@@ -503,8 +505,8 @@ def createKfs(empty, dcObj, startFrame, curveFrameCnt, alignToVert, objType):
     curveObj.data.bevel_factor_end = 1
     insertKF(obj = curveObj.data, dataPath = 'bevel_factor_end', \
         frame = (startFrame + curveFrameCnt))
-    
-    fc = curveObj.data.animation_data.action.fcurves.find('bevel_factor_end')    
+
+    fc = curveObj.data.animation_data.action.fcurves.find('bevel_factor_end')
     for kfp in fc.keyframe_points:
         kfp.interpolation = 'LINEAR'
 
@@ -513,35 +515,35 @@ def getLiftMidPtCo(objStart, objEnd, liftAxis, lift, reverseLift):
     endCo = objEnd.startCo
 
     if(all(co==0 for co in objStart.curveNormal)):
-        moveAxis = liftAxis 
+        moveAxis = liftAxis
     else:
         moveAxis = [i for i in range(0, len(objStart.curveNormal)) \
             if(abs(objStart.curveNormal[i]) == abs(max(objStart.curveNormal, key=abs)))][0]
-            
+
     midPtCo = startCo + (endCo - startCo) / 2.
-    midPtCo[moveAxis] = max(startCo[moveAxis], endCo[moveAxis], key=abs) 
-    
+    midPtCo[moveAxis] = max(startCo[moveAxis], endCo[moveAxis], key=abs)
+
     dirn = 1
     if(endCo[moveAxis] < startCo[moveAxis]):
         dirn = -1
-        
+
     if(reverseLift):
-        dirn *= -1 
-    
+        dirn *= -1
+
     midPtCo[moveAxis] += dirn * lift
     return midPtCo
 
 def addLiftKeyFrames(empty, objStart, objEnd, liftAxis, lift, currFrame, \
     liftFrameCnt, reverseLift):
-    
+
     empty.location = getLiftMidPtCo(objStart, objEnd, liftAxis, lift, reverseLift)
     insertKF(obj = empty, dataPath = 'location', \
-        frame = round(currFrame + liftFrameCnt / 2))    
-        
-    empty.location = objEnd.startCo
-    insertKF(obj = empty, dataPath = 'location', frame = (currFrame + liftFrameCnt))    
+        frame = round(currFrame + liftFrameCnt / 2))
 
-def getTransitionInfo(allDcObjs, liftAxis, maxLift, transitionSpeed, 
+    empty.location = objEnd.startCo
+    insertKF(obj = empty, dataPath = 'location', frame = (currFrame + liftFrameCnt))
+
+def getTransitionInfo(allDcObjs, liftAxis, maxLift, transitionSpeed,
     proportionalLift, reverseLift):
         transitionLengths = []
         transitionLifts = []
@@ -565,7 +567,7 @@ def getTransitionInfo(allDcObjs, liftAxis, maxLift, transitionSpeed,
                     lift = maxLift * (fl / maxFlatLength)
                 else:
                     lift = maxLift
-                    
+
                 midPtCo = getLiftMidPtCo(startObj, endObj, liftAxis, lift, reverseLift)
 
                 transitionLength = ((midPtCo - startObj.endCo).length + \
@@ -583,7 +585,7 @@ def getCurveDCObjs(selObjs, objType, defaultDepth, retain, copyPropObj, \
     idx = 0    #Only for naming the new objects
 
     for obj in selObjs:
-        dcObjs = DrawableCurve.getDCObjsForSpline(obj, objType, 
+        dcObjs = DrawableCurve.getDCObjsForSpline(obj, objType,
             defaultDepth, idx, group, copyPropObj, flatMat, bevelObj)
 
         if(len(dcObjs) == 0 ):
@@ -594,40 +596,40 @@ def getCurveDCObjs(selObjs, objType, defaultDepth, retain, copyPropObj, \
         if(retain == 'Copy'):
             obj.hide_viewport = True
             obj.hide_render = True
-            
+
         curveDCObjs.append(dcObjs)
-            
+
     return curveDCObjs
 
 def showOrigCurve(zeroFrameCurveDCObjs, zeroFrameOrigCurves, currFrame, retain):
     for i, origCurve in enumerate(zeroFrameOrigCurves):
 
         origCurve.scale = [0,0,0]
-        insertKF(obj = origCurve, dataPath = 'scale', frame = (currFrame-1))        
+        insertKF(obj = origCurve, dataPath = 'scale', frame = (currFrame-1))
 
         origCurve.scale = zeroFrameCurveDCObjs[i][0].scale[:]
-        insertKF(obj = origCurve, dataPath = 'scale', frame = (currFrame))        
-        
+        insertKF(obj = origCurve, dataPath = 'scale', frame = (currFrame))
+
         if(retain != 'Both'):
             for dcObj in zeroFrameCurveDCObjs[i]:
                 dcObj.bCurveObj.scale = dcObj.scale[:]
-                insertKF(obj = dcObj.bCurveObj, dataPath = 'scale', frame = (currFrame-1))        
+                insertKF(obj = dcObj.bCurveObj, dataPath = 'scale', frame = (currFrame-1))
                 dcObj.bCurveObj.scale = [0,0,0]
-                insertKF(obj = dcObj.bCurveObj, dataPath = 'scale', frame = (currFrame))        
+                insertKF(obj = dcObj.bCurveObj, dataPath = 'scale', frame = (currFrame))
 
 #TODO: Find a better way to calculate frame count proportional to the length
-def getFrameCntForLength(totalFrames, totalLength, remainingLength, 
+def getFrameCntForLength(totalFrames, totalLength, remainingLength,
     remainingFrames, elemLength):
         cnt1 = remainingFrames * elemLength / remainingLength
         return floor(cnt1)
 
 def main(retain, defaultDepth, startFrame, totalFrames,
-    liftAxis, maxLift, transitionSpeed, alignToVert, proportionalLift, objType, 
+    liftAxis, maxLift, transitionSpeed, alignToVert, proportionalLift, objType,
         copyPropObj, rgba, customWriter, reverseLift, resetLocation):
 
     selObjs = [o for o in bpy.data.objects if o in bpy.context.selected_objects
         and o != customWriter and isBezier(o)]
-        
+
     # ~ selObjs = bpy.context.selected_objects[:]    #sequence incorrect
     group = bpy.data.collections.new(NEW_DATA_PREFIX+'Collection')
     bpy.context.scene.collection.children.link(group)
@@ -639,7 +641,7 @@ def main(retain, defaultDepth, startFrame, totalFrames,
     else:
         flatMat, bevelObj = None, None
 
-    curveDCObjs = getCurveDCObjs(selObjs, objType, defaultDepth, 
+    curveDCObjs = getCurveDCObjs(selObjs, objType, defaultDepth,
         retain, copyPropObj, flatMat, bevelObj, group)
 
     currFrame = -1
@@ -704,9 +706,9 @@ def main(retain, defaultDepth, startFrame, totalFrames,
 
             if(i > 0):
                 remainingFrames = totalFrames - currFrame + startFrame
-                liftFrameCnt = getFrameCntForLength(totalFrames, totalLength, 
+                liftFrameCnt = getFrameCntForLength(totalFrames, totalLength,
                     remainingLength, remainingFrames, transitionLengths[i-1])
-    
+
                 if(liftFrameCnt == remainingFrames and
                     i < len(allDcObjs)-1):
                     lastButOneFrame = True
@@ -728,13 +730,13 @@ def main(retain, defaultDepth, startFrame, totalFrames,
                 remainingLength -= transitionLengths[i-1]
 
             remainingFrames = totalFrames - currFrame + startFrame
-            
+
             if(i == len(allDcObjs)-1):
                 curveFrameCnt = remainingFrames
             else:
-                curveFrameCnt = getFrameCntForLength(totalFrames, totalLength, 
+                curveFrameCnt = getFrameCntForLength(totalFrames, totalLength,
                     remainingLength, remainingFrames, dcObj.curveLength)
-                    
+
             #Condition will be rare, but should be taken care of
             if(curveFrameCnt >= remainingFrames and i < len(allDcObjs)-1):
                 lastButOneFrame = True
@@ -769,15 +771,15 @@ def main(retain, defaultDepth, startFrame, totalFrames,
             totalProcessed -= len(zeroFrameCurves)
             newOrigCurveIdx = 0
             processed = 0
-            
+
             while(processed < totalProcessed):
                 processed += len(curveDCObjs[newOrigCurveIdx])
                 newOrigCurveIdx += 1
 
             if(processed > totalProcessed):
                 newOrigCurveIdx -= 1
-                
-            showOrigCurve(curveDCObjs[oldOrigCurveIdx:newOrigCurveIdx], 
+
+            showOrigCurve(curveDCObjs[oldOrigCurveIdx:newOrigCurveIdx],
                 selObjs[oldOrigCurveIdx:newOrigCurveIdx], currFrame, retain)
 
             oldOrigCurveIdx = newOrigCurveIdx
@@ -785,17 +787,17 @@ def main(retain, defaultDepth, startFrame, totalFrames,
     if(len(zeroFrameCurves) > 0):
         addedLength = _createPendingKfs(empty, alignToVert)
         if(retain != 'Copy'):
-            showOrigCurve(curveDCObjs[oldOrigCurveIdx:], selObjs[oldOrigCurveIdx:], 
+            showOrigCurve(curveDCObjs[oldOrigCurveIdx:], selObjs[oldOrigCurveIdx:],
                 currFrame, retain)
 
     setInterpolationLinear(empty)
 
     if(customWriter != None):
         addCustomWriterKFs(customWriter, empty, startFrame, currFrame, resetLocation)
-    
+
     if(bpy.context.scene.frame_end < currFrame):
         bpy.context.scene.frame_end = currFrame
-        
+
     bpy.context.scene.frame_current = startFrame
 
     return currFrame
@@ -809,9 +811,9 @@ def isAddTextAvailable():
         return False
 
 class CreateWritingAnimParams(bpy.types.PropertyGroup):
-    retain : EnumProperty(name="Retain", 
-            items = [('Both', 'Both', ""), ('Original', 'Original', ""), 
-                ('Copy', 'Copy', "")], 
+    retain : EnumProperty(name="Retain",
+            items = [('Both', 'Both', ""), ('Original', 'Original', ""),
+                ('Copy', 'Copy', "")],
             default = 'Copy',
             description='What to Retain After Finishing Animation')
 
@@ -844,9 +846,9 @@ class CreateWritingAnimParams(bpy.types.PropertyGroup):
             description = "Should Lift Height Be Proportional to Transition Distance",
             default = True)
 
-    liftAxis : EnumProperty(name="Axis", 
-            items = [('0', 'X', ""), ('1', 'Y', ""), ('2', 'Z', "")], 
-            default = '2', 
+    liftAxis : EnumProperty(name="Axis",
+            items = [('0', 'X', ""), ('1', 'Y', ""), ('2', 'Z', "")],
+            default = '2',
             description='Axis Along Which Writer Is to Be Lifted (If Curve Is Linear)')
 
     reverseLift : BoolProperty(
@@ -865,11 +867,11 @@ class CreateWritingAnimParams(bpy.types.PropertyGroup):
             default = True)
 
     animType : EnumProperty(name = "Type",
-            description='Follow Path Or Location Based Animation.',    
-            items = [(OBJTYPE_NONMODIFIER, 'Follow Path', ""), 
-                (OBJTYPE_MODIFIER, 'Location', "")], 
+            description='Follow Path Or Location Based Animation.',
+            items = [(OBJTYPE_NONMODIFIER, 'Follow Path', ""),
+                (OBJTYPE_MODIFIER, 'Location', "")],
             default = OBJTYPE_MODIFIER)
-            
+
     isFlat: BoolProperty(name="Flat Curves (Experimental)", default = False, \
         description='Render curves with zero thickness and rounded ends')
 
@@ -879,37 +881,37 @@ class CreateWritingAnimParams(bpy.types.PropertyGroup):
     )
 
     copyPropertiesCurve : PointerProperty(
-            name = 'Properties of', 
+            name = 'Properties of',
             description = "Copy Properties (Material, Bevel Depth etc.) of Object",
             type = bpy.types.Object)
-        
+
     customWriter : PointerProperty(
-            name = 'Custom Writer', 
+            name = 'Custom Writer',
             description = "Custom Object To Be Used As Writer",
             type = bpy.types.Object)
-            
+
     if(isAddTextAvailable()):
         #TODO: Why this is needed two times?
         from .addstrokefont_2_8.strokefontmain import getfontNameList, addText
-        
-        animate : EnumProperty(name="Animate", 
+
+        animate : EnumProperty(name="Animate",
             items = [('selCurves', 'Selected Curves', "Create animation for selected curves"), \
-                ('text', 'Text', "Create animation for stroke font text")], 
+                ('text', 'Text', "Create animation for stroke font text")],
                 default = 'text',
                 description='Generate drawing animation for selected curves or text')
-                
+
         text : StringProperty(name = "Text", default = 'Hello\\'+'nWorld!', description = 'Text to add')
-        
-        fontName : EnumProperty(name = "Font", description='Text Font', items = getfontNameList)    
-        
+
+        fontName : EnumProperty(name = "Font", description='Text Font', items = getfontNameList)
+
         fontSize : FloatProperty(name = "Font Size", description = 'Text Font Size', default = 0.25)
-        
+
         charSpacing : FloatProperty(name = "Char Spacing", \
             description='Spacing between characters', default = 1)
-            
+
         wordSpacing : FloatProperty(name = "Word Spacing", \
             description='Spacing between words', default = 1)
-            
+
         lineSpacing : FloatProperty(name = "Line Spacing", \
             description='Spacing between lines', default = 1)
 
@@ -919,13 +921,13 @@ class CreateWritingAnimOp(bpy.types.Operator):
     bl_idname = "object.create_writing_anim"
     bl_label = "Create Writing Animation"
     bl_options = {'REGISTER', 'UNDO'}
-    
+
     keyframeCnt = 0
 
     def execute(self, context):
-        CreateWritingAnimOp.keyframeCnt = 0 
+        CreateWritingAnimOp.keyframeCnt = 0
         params = context.window_manager.createWritingAnimParams
-        
+
         retain = params.retain
         startFrame = params.startFrame
         totalFrames = params.totalFrames
@@ -941,32 +943,32 @@ class CreateWritingAnimOp(bpy.types.Operator):
         if(isFlat): copyPropObj = None
         else: rgba = None
         animType = params.animType if not isFlat else OBJTYPE_NONMODIFIER
-            
+
         customWriter = params.customWriter
         resetLocation = params.resetLocation
-        
+
         if(copyPropObj == None or not hasattr(copyPropObj, 'type') or \
             copyPropObj.type not in(['CURVE','MESH'])):
             copyPropObj = None
-            
+
         textColl = None
         if(hasattr(params, 'animate') and params.animate == 'text'):
             textColl = createText(context, rgba, copyPropObj)
-            alignToVert = False            
+            alignToVert = False
             animType = OBJTYPE_NONMODIFIER
             retain = 'Copy'
             liftAxis = 2 #Z in case of text
-    
+
         endFrame = main(retain, DEFAULT_DEPTH, startFrame, totalFrames,
-            liftAxis, maxLift, transitionSpeed, alignToVert, proportionalLift, animType, 
+            liftAxis, maxLift, transitionSpeed, alignToVert, proportionalLift, animType,
                 copyPropObj, rgba, customWriter, reverseLift, resetLocation)
-                
+
         if(endFrame < 0):
             self.report({'WARNING'}, "No Curve Objects Selected to Create Animation")
         else:
-            self.report({'INFO'}, "Created " + 
+            self.report({'INFO'}, "Created " +
                 str(CreateWritingAnimOp.keyframeCnt)+ " new keyframes")
-                
+
         if(textColl != None):
             textObjs = textColl.objects[:]
             for o in textObjs:
@@ -980,7 +982,7 @@ class CreateWritingAnimOp(bpy.types.Operator):
 
 def createText(context, rgba, copyPropObj):
     stParams = context.window_manager.createWritingAnimParams
-    
+
     fontName = stParams.fontName
     fontSize = stParams.fontSize
     charSpacing = stParams.charSpacing
@@ -992,20 +994,20 @@ def createText(context, rgba, copyPropObj):
     from .addstrokefont_2_8.strokefontmain import getFontNames, addText
     collection = addText(fontName, fontSize, charSpacing, wordSpacing, lineSpacing, \
         copyPropObj, rgba, text, cloneGlyphs = False)
-        
+
     for o in bpy.data.objects:
         try:
             o.select_set(False)
         except:
             pass
-        
+
     for o in collection.all_objects:
         o.select_set(True)
 
     # ~ context.scene.update()
     depsgraph = context.evaluated_depsgraph_get()
     depsgraph.update()
-    
+
     return collection
 
 class SeparateSplinesObjsOp(bpy.types.Operator):
@@ -1018,11 +1020,11 @@ class SeparateSplinesObjsOp(bpy.types.Operator):
         selObjs = bpy.context.selected_objects
         changeCnt = 0
         splineCnt = 0
-        
+
         if(len(selObjs) == 0):
             self.report({'WARNING'}, "No Curve Objects Selected")
             return {'FINISHED'}
-        
+
         for obj in selObjs:
 
             if(not isBezier(obj) or len(obj.data.splines) <= 1):
@@ -1049,10 +1051,10 @@ class SeparateSplinesObjsOp(bpy.types.Operator):
             # ~ bpy.data.objects.remove(obj) #2.8 Changed?
             changeCnt += 1
             splineCnt += (i + 1)
-            
+
         self.report({'INFO'}, "Separated "+ str(changeCnt) + " curve object" + \
             ("s" if(changeCnt > 1) else "") + " into " +str(splineCnt) + " new ones")
-            
+
         return {'FINISHED'}
 
 # Moved to __init__.py for making an installable zip
@@ -1061,10 +1063,10 @@ class SeparateSplinesObjsOp(bpy.types.Operator):
     # ~ "author": "Shrinivas Kulkarni",
     # ~ "location": "Properties > Active Tool and Workspace Settings > Create Writing Animation",
     # ~ "category": "Animation",
-    # ~ "blender": (2, 80, 0),    
+    # ~ "blender": (2, 80, 0),
 # ~ }
 
-class CreateWritingAnimPanel(bpy.types.Panel):    
+class CreateWritingAnimPanel(bpy.types.Panel):
     bl_label = "Writing Animation"
     bl_idname = "CURVE_PT_writinganim"
     # ~ bl_space_type = 'PROPERTIES'
@@ -1073,10 +1075,10 @@ class CreateWritingAnimPanel(bpy.types.Panel):
     bl_region_type = 'UI'
     bl_category = "Tool"
     bl_context = '.objectmode'
-    
+
     def draw(self, context):
         params = bpy.context.window_manager.createWritingAnimParams
-        
+
         layout = self.layout
         layout.use_property_split = True
 
@@ -1084,13 +1086,13 @@ class CreateWritingAnimPanel(bpy.types.Panel):
         col = layout.column()
 
         col.operator("object.separate_splines")
-        
+
         col.separator()
         col.label(text="Animation", icon="ANIM")
-        
+
         if(hasattr(params, 'animate')):
             col.prop(params, "animate")
-        
+
             if(params.animate == 'text'):
                 col.prop(params, 'text')
                 col.prop(params, 'fontName')
@@ -1098,10 +1100,10 @@ class CreateWritingAnimPanel(bpy.types.Panel):
                 col.prop(params, 'charSpacing')
                 col.prop(params, 'wordSpacing')
                 col.prop(params, 'lineSpacing')
-                
+
         col.prop(params, "startFrame")
         col.prop(params, "totalFrames")
-        
+
         if(isAddTextAvailable()):
             col.prop(params, "isFlat")
 
@@ -1109,7 +1111,7 @@ class CreateWritingAnimPanel(bpy.types.Panel):
             if(not params.isFlat):
                 col.prop(params, 'animType')
             col.prop(params, "retain")
-                
+
         if(params.isFlat):
             col.prop(params, "rgba")
         else:
@@ -1120,11 +1122,11 @@ class CreateWritingAnimPanel(bpy.types.Panel):
 
         col.prop(params, "transitionSpeed")
         col.prop(params, "maxLift")
-        
+
         #Always Z in case of text
         if(not hasattr(params, 'animate') or params.animate != 'text'):
             col.prop(params, "liftAxis")
-            
+
         col.prop(params, "proportionalLift")
         col.prop(params, "reverseLift")
 
@@ -1135,7 +1137,7 @@ class CreateWritingAnimPanel(bpy.types.Panel):
             col.prop(params, "alignToVert")
 
         col.prop(params, "customWriter")
-        
+
         col.prop(params, "resetLocation")
 
         col.separator()
