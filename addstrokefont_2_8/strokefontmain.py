@@ -9,7 +9,7 @@
 #
 # License: GPL (https://github.com/Shriinivas/blenderstrokefont/blob/master/LICENSE)
 #
-# Not yet pep8 compliant 
+# Not yet pep8 compliant
 
 import os, sys, re, math
 from mathutils import Vector, Matrix
@@ -38,8 +38,8 @@ def getfontNameList(scene, context):
 #Called too many times, so cache
 getfontNameList.fontNames = None
 
-def subdivide(bm, subdivCnt, w, h):    
-    wIncr = w / subdivCnt 
+def subdivide(bm, subdivCnt, w, h):
+    wIncr = w / subdivCnt
     hIncr = h / subdivCnt
 
     wStart = -w/2
@@ -50,22 +50,22 @@ def subdivide(bm, subdivCnt, w, h):
             plane_co=(wStart + wIncr * i, 0,0), plane_no=Vector((1,0,0)))
         ret = bmesh.ops.bisect_plane(bm, geom=bm.verts[:]+bm.edges[:]+bm.faces[:], \
             plane_co=(0, hStart + hIncr * i, 0), plane_no=Vector((0, 1,0)))
-    
+
 def createPlane(leftTop, bottomRight, collection):
     z = leftTop[2] #z is same for both
     w = bottomRight[0] - leftTop[0]
     h = leftTop[1] - bottomRight[1]
-    
+
     bm = bmesh.new()
     v0 = bm.verts.new((-w/2, -h/2, 0))
     v1 = bm.verts.new((w/2, -h/2, 0))
     v2 = bm.verts.new((-w/2, h/2, 0))
     v3 = bm.verts.new((w/2, h/2, 0))
-    
+
     bm.faces.new((v0, v1, v3, v2))
 
     subdivide(bm, subdivCnt = 50, w = w, h = h)
-    
+
     me   = bpy.data.meshes.new('plane')
     bm.to_mesh(me)
     bm.free()
@@ -73,13 +73,13 @@ def createPlane(leftTop, bottomRight, collection):
     obj   = bpy.data.objects.new('plane', me)
     collection.objects.link(obj)
     obj.location = (leftTop[0] + w / 2, bottomRight[1] + h / 2, z)
-    
+
     return obj
-          
+
 def main(context, rectangles = None):
     params = context.window_manager.AddStrokeFontTextParams
-    
-    action = params.action    
+
+    action = params.action
     text = params.text
     filePath = bpy.path.abspath(params.filePath)
 
@@ -101,7 +101,7 @@ def main(context, rectangles = None):
             params.copyPropertiesCurve.data
     except:
         params.copyPropertiesCurve = None
-    
+
 
     cloneGlyphs = params.cloneGlyphs
     confined = params.confined
@@ -113,7 +113,7 @@ def main(context, rectangles = None):
     expandDir = None if params.expandDir == 'none' else params.expandDir
     expandDist = params.expandDist
     addPlane = params.addPlane
-    
+
     return addText(fontName, fontSize, charSpacing, wordSpacing, lineSpacing, copyPropObj, \
         rgba, text, cloneGlyphs, action, filePath, confined, width, height, \
             margin, hAlignment, vAlignment, expandDir, expandDist, rectangles, addPlane)
@@ -123,21 +123,21 @@ def addText(fontName, fontSize, charSpacing, wordSpacing, lineSpacing, copyPropO
     text, cloneGlyphs, action = 'addInputText', filePath = None, confined = False, \
         width = None, height = None, margin = None, hAlignment = None, \
             vAlignment = None, expandDir = None, expandDist  = None, \
-                rectangles = None, addPlane = None):        
-    
+                rectangles = None, addPlane = None, bevelDepth = None):
+
     parentPath = os.path.dirname(__file__)
-    
-    bevelDepth = 0.01 * fontSize
-    
+
+    if(bevelDepth == None): bevelDepth = 0.01 * fontSize
+
     renderer = BlenderFontRenderer(copyPropObj, bevelDepth, cloneGlyphs, rgba)
 
     if(action == "addGlyphTable"):
         charSpacing = 1
         lineSpacing = 2
 
-    context = DrawContext(parentPath, fontName, fontSize, charSpacing, wordSpacing, lineSpacing, 
-        BlenderCharDataFactory(), renderer, bottomToTop = True) 
-    
+    context = DrawContext(parentPath, fontName, fontSize, charSpacing, wordSpacing, lineSpacing,
+        BlenderCharDataFactory(), renderer, bottomToTop = True)
+
     if(action == "addGlyphTable"):
         context.renderGlyphTable()
     else:
@@ -146,8 +146,8 @@ def addText(fontName, fontSize, charSpacing, wordSpacing, lineSpacing, copyPropO
 
         elif(action == "addFromFile"):
             try:
-                with open(filePath, 'rU') as f: 
-                    text = f.read() 
+                with open(filePath, 'rU') as f:
+                    text = f.read()
             except:
                 return None
 
@@ -156,7 +156,7 @@ def addText(fontName, fontSize, charSpacing, wordSpacing, lineSpacing, copyPropO
 
         if(rectangles):
             context.renderCharsInSelBoxes(text, rectangles, margin, hAlignment, vAlignment, addPlane)
-            
+
         elif(confined):
             x1, y1, z1 = bpy.context.scene.cursor.location
             x2, y2, z2 = x1 + width, y1 - height, z1
@@ -165,21 +165,21 @@ def addText(fontName, fontSize, charSpacing, wordSpacing, lineSpacing, copyPropO
                 vAlignment, addPlane, expandDir, expandDist)
         else:
             context.renderCharsWithoutBox(text)
-        
+
     return renderer.collection
-        
+
 class BlenderCharData(CharData):
     def __init__(self, char, rOffset, segs, glyphName):
         self.segs = segs
         super(BlenderCharData, self).__init__(char, rOffset, glyphName)
-    
+
     def scaleGlyph(self, scaleX, scaleY):
         self.rOffset *= scaleX
         for i, seg in enumerate(self.segs):
             pts = []
             for j in range(0, len(seg)):
-                pts.append(complex(seg[j].real * scaleX, -scaleY * seg[j].imag))            
-                
+                pts.append(complex(seg[j].real * scaleX, -scaleY * seg[j].imag))
+
             self.segs[i] = CubicBezier(*pts)
         self.bbox = self.getBBox()
 
@@ -196,7 +196,7 @@ class BlenderCharData(CharData):
 class BlenderCharDataFactory:
     def __init__(self):
         pass
-        
+
     def getCharData(self, char, rOffset, pathStr, glyphName):
         segs = parse_path(pathStr)
         return BlenderCharData(char, rOffset, segs, glyphName)
@@ -225,7 +225,7 @@ class BlenderFontRenderer:
             curveData, self.cloneGlyphs, self.bevelDepth, isFlat)
         if(curveData == None):
             self.charObjDataCache[charData.char] = curve.data
-            
+
         self.currCollection.objects.link(curve)
 
         curve.location[0] += x
@@ -241,32 +241,32 @@ class BlenderFontRenderer:
             mod = curve.modifiers.new('mod', type='SHRINKWRAP')
             mod.target = self.currPlane
             mod.offset = -0.001
-            
+
         curve.select_set(False)
-        
+
     def beforeRender(self):
         self.collection = bpy.data.collections.new('StrokeFontText')
         bpy.context.scene.collection.children.link(self.collection)
         if(self.objMat != None):
             self.bevelObj = createCircle(self.bevelDepth, self.collection)
         self.currCollection = self.collection
-    
-    def newBoxToBeRendered(self, box, addPlane):        
+
+    def newBoxToBeRendered(self, box, addPlane):
         self.currCollection = bpy.data.collections.new('StrokeFontTextBox')
-        self.collection.children.link(self.currCollection)     
+        self.collection.children.link(self.currCollection)
         self.z = box[0][2]
         if(addPlane):
             self.currPlane = createPlane(box[0], box[1], self.currCollection)
-            # ~ bpy.context.scene.update()        
+            # ~ bpy.context.scene.update()
             bpy.context.evaluated_depsgraph_get().update()
 
-    
+
     def moveBoxInYDir(self, moveBy):
         for o in self.currCollection.objects:
             if(o.type == 'CURVE'):
                 o.location[1] += moveBy
 
-    def centerInView(self, width, height):          
+    def centerInView(self, width, height):
         pass
 
     def renderPlainText(self, text, size, x, y, objName):
@@ -283,38 +283,38 @@ class BlenderFontRenderer:
             mat = self.copyPropObj.data.materials[copyMatIdx]
             fontOb.data.materials.append(mat)
             fontOb.active_material_index = 0
-        
+
         # ~ return fontOb
-        
+
     def getBoxLeftTopRightBottom(self, box):
         x1 = box[0][0]
         y1 = box[0][1]
 
         x2 = box[1][0]
         y2 = box[1][1]
-        
+
         return min(x1, x2), max(y1, y2), max(x1, x2), min(y1, y2)
-        
+
     def getBoxFromCoords(self, x1, y1, x2, y2):
         return [Vector((x1, y1, self.z)), Vector((x2, y2, self.z))]
-        
+
     def getDefaultStartLocation(self):
         x, y, z = bpy.context.scene.cursor.location
         return x, y
-        
+
 #Avoid errors due to floating point conversions/comparisons
 def cmplxCmpWithMargin(complex1, complex2, margin = DEF_ERR_MARGIN):
     return floatCmpWithMargin(complex1.real, complex2.real, margin) and \
         floatCmpWithMargin(complex1.imag, complex2.imag, margin)
 
 def floatCmpWithMargin(float1, float2, margin = DEF_ERR_MARGIN):
-    return abs(float1 - float2) < margin 
-    
+    return abs(float1 - float2) < margin
+
 def getDisconnParts(segs):
     prevSeg = None
     disconnParts = []
     newSegs = []
-    
+
     for i in range(0, len(segs)):
         seg = segs[i]
         if((prevSeg== None) or not cmplxCmpWithMargin(prevSeg.end, seg.start)):
@@ -371,7 +371,7 @@ def getFlatMat(matName, rgba):
                     return mat
     mat = bpy.data.materials.new(matName)
     mat.use_nodes = True
-    
+
     tree = mat.node_tree
     links = tree.links
 
@@ -383,7 +383,7 @@ def getFlatMat(matName, rgba):
     bsdfShader = tree.nodes.new('ShaderNodeBsdfPrincipled')
     rgbShader = tree.nodes.new('ShaderNodeShaderToRGB')
     colorRampShader = tree.nodes.new('ShaderNodeValToRGB')
-    
+
     colorRampShader.color_ramp.elements[0].color = rgba
     colorRampShader.color_ramp.elements[1].color = rgba
 
@@ -397,12 +397,12 @@ def getFlatMat(matName, rgba):
 def createCircle(radius, collection, hide = True):
     cName = '_bevelCircle'
     data = bpy.data.curves.new(cName, 'CURVE')
-    data.dimensions = '3D'            
+    data.dimensions = '3D'
     spline = data.splines.new('BEZIER')
     spline.use_cyclic_u = True
     bpts = spline.bezier_points
     bpts.add(3)
-    
+
     d = 2 * 0.27606262
     bpts[0].co = Vector((radius, 0, 0))
     bpts[0].handle_right = Vector((radius, radius * d, 0))
@@ -434,14 +434,14 @@ class CPath:
     def getNewCurveData(self, charData, copyPropObj):
         segs = charData.segs
         parts = getDisconnParts(segs)
-        
+
         if(copyPropObj != None and isBezier(copyPropObj)):
             newCurveData = copyPropObj.data.copy()
             newCurveData.name = charData.char
             newCurveData.splines.clear()
         else:
             newCurveData = bpy.data.curves.new(charData.char, 'CURVE')
-            
+
         splinesData = []
 
         for i, part in enumerate(parts):
@@ -452,7 +452,7 @@ class CPath:
             spline = newCurveData.splines.new('BEZIER')
             spline.bezier_points.add(len(newPoints)-1)
             spline.use_cyclic_u = parts[i].isClosed
-            
+
             for j in range(0, len(spline.bezier_points)):
                 newPoint = newPoints[j]
                 spline.bezier_points[j].co = newPoint[0]
@@ -469,7 +469,7 @@ class CPath:
             curveData = self.getNewCurveData(charData, copyPropObj)
         elif(not cloneGlyphs):
             curveData = curveData.copy()
-            
+
         if(copyPropObj != None and isBezier(copyPropObj)):
             obj = copyPropObj.copy()
             obj.name = 't'
@@ -478,7 +478,7 @@ class CPath:
             if(curveData.shape_keys != None):
                 keyblocks = reversed(curveData.shape_keys.key_blocks)
                 for sk in keyblocks:
-                    obj.shape_key_remove(sk)            
+                    obj.shape_key_remove(sk)
         elif(isFlat):
             # Note: Changes to this should also reflect in getDCObjsForSpline
             # of writinganim_2_8
@@ -500,10 +500,10 @@ class CPath:
             curveData.bevel_resolution = 0
             curveData.twist_smooth = 0
             curveData.twist_mode = 'Z_UP'
-            
+
         obj = bpy.data.objects.new('t', curveData)
-        
-        curveData.dimensions = '3D'            
+
+        curveData.dimensions = '3D'
         obj.location = (0, 0, 0)
         return obj
 
@@ -528,16 +528,16 @@ def unit_vector_angle(ux, uy, vx, vy):
         sign = -1
     else:
         sign = 1
-        
+
     dot  = ux * vx + uy * vy
 
     # Add this to work with arbitrary vectors:
     # dot /= math.sqrt(ux * ux + uy * uy) * math.sqrt(vx * vx + vy * vy)
 
     # rounding errors, e.g. -1.0000000000000002 can screw up this
-    if (dot >  1.0): 
+    if (dot >  1.0):
         dot =  1.0
-        
+
     if (dot < -1.0):
         dot = -1.0
 
@@ -606,9 +606,9 @@ def get_arc_center(x1, y1, x2, y2, fa, fs, rx, ry, sin_phi, cos_phi):
 
     if (fs == 0 and delta_theta > 0):#Migration Note: note ===
         delta_theta -= TAU
-    
+
     if (fs == 1 and delta_theta < 0):#Migration Note: note ===
-        delta_theta += TAU    
+        delta_theta += TAU
 
     return [ cx, cy, theta1, delta_theta ]
 
@@ -672,7 +672,7 @@ def a2c(x1, y1, x2, y2, fa, fs, rx, ry, phi):
         result.append(approximate_unit_arc(theta1, delta_theta))
 
         theta1 += delta_theta
-        
+
     # We have a bezier approximation of a unit circle,
     # now need to transform back to the original ellipse
     #
@@ -696,14 +696,14 @@ def getMappedList(result, rx, ry, sin_phi, cos_phi, cc):
 
             # translate
             elem[i + 0] = xp + cc[0]
-            elem[i + 1] = yp + cc[1]        
+            elem[i + 1] = yp + cc[1]
             curve.append(complex(elem[i + 0], elem[i + 1]))
         mappedList.append(curve)
     return mappedList
 
 ######################### a2c end ########################
 
-    
+
 
 #
 # The following section is an extract
@@ -733,9 +733,9 @@ def getCBForQBPts(start, ctrl, end):
 
     cp1 = start + 2/3 * (ctrl - start)
     cp2 = end + 2/3 * (ctrl - end)
-    
+
     return CubicBezier(cp0, cp1, cp2, cp3)
-    
+
 # Added for stroke font text
 def getCBForArcPts(start, radius, rotation, large_arc, sweep, end):
     x1, y1 = start.real, start.imag
@@ -747,10 +747,10 @@ def getCBForArcPts(start, radius, rotation, large_arc, sweep, end):
     curvesPts = a2c(x1, y1, x2, y2, fa, fs, rx, ry, phi)
     newPartSegs = []
     for curvePts in curvesPts:
-        newPartSegs.append(CubicBezier(curvePts[0], curvePts[1], 
+        newPartSegs.append(CubicBezier(curvePts[0], curvePts[1],
             curvePts[2], curvePts[3]))
     return newSegs
-    
+
 
 def parse_path(pathdef, current_pos=0j):
 
@@ -921,16 +921,16 @@ class Path:
     def __init__(self, segments, isClosed = False):
         self.segments = segments
         self.isClosed = isClosed
-        
+
     def getBezierPtsInfo(self):
         prevSeg = None
         bezierPtsInfo = []
 
         for j, seg in enumerate(self.segments):
-            
+
             pt = get3DVector(seg.start)
             handleRight = get3DVector(seg.control1)
-            
+
             if(j == 0):
                 if(self.isClosed):
                     handleLeft = get3DVector(self.segments[-1].control2)
@@ -938,16 +938,16 @@ class Path:
                     handleLeft = pt
             else:
                 handleLeft = get3DVector(prevSeg.control2)
-                
+
             bezierPtsInfo.append([pt, handleLeft, handleRight])
             prevSeg = seg
-    
+
         if(self.isClosed == True):
             bezierPtsInfo[-1][2] = get3DVector(seg.control1)
         else:
             bezierPtsInfo.append([get3DVector(prevSeg.end), \
                 get3DVector(prevSeg.control2), get3DVector(prevSeg.end)])
-                
+
         return bezierPtsInfo
 
 #see https://stackoverflow.com/questions/24809978/calculating-the-bounding-box-of-cubic-bezier-curve
@@ -962,7 +962,7 @@ def getCBezierBBox(cbezier):
     C = [cbezier.control2.real, cbezier.control2.imag]
     D = [cbezier.end.real, cbezier.end.imag]
     dim = 2
-    
+
     MINXY = [min([A[i], D[i]]) for i in range(0, dim)]
     MAXXY = [max([A[i], D[i]]) for i in range(0, dim)]
     bbox = [MINXY, MAXXY]
