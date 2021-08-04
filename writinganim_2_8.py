@@ -625,7 +625,7 @@ def getFrameCntForLength(totalFrames, totalLength, remainingLength,
 
 def main(retain, defaultDepth, startFrame, totalFrames,
     liftAxis, maxLift, transitionSpeed, alignToVert, proportionalLift, objType,
-        copyPropObj, rgba, customWriter, reverseLift, resetLocation):
+        copyPropObj, rgba, thickness, customWriter, reverseLift, resetLocation):
 
     selObjs = [o for o in bpy.data.objects if o in bpy.context.selected_objects
         and o != customWriter and isBezier(o)]
@@ -637,7 +637,7 @@ def main(retain, defaultDepth, startFrame, totalFrames,
     if(isAddTextAvailable() and rgba != None):
         from .addstrokefont_2_8.strokefontmain import getFlatMat, createCircle, copyObjAttr
         flatMat = getFlatMat('Flat Curves Material', rgba)
-        bevelObj = createCircle(defaultDepth * 5, group)
+        bevelObj = createCircle(thickness, group)
     else:
         flatMat, bevelObj = None, None
 
@@ -880,6 +880,13 @@ class CreateWritingAnimParams(bpy.types.PropertyGroup):
         default=(.8, .8, .8, 1), description = 'Color of curve'
     )
 
+    thickness : FloatProperty(
+            name = "Curve Width",
+            description = "Width of curve",
+            min = 0.00001,
+            default = 0.001,
+            precision = 3)
+
     copyPropertiesCurve : PointerProperty(
             name = 'Properties of',
             description = "Copy Properties (Material, Bevel Depth etc.) of Object",
@@ -940,8 +947,11 @@ class CreateWritingAnimOp(bpy.types.Operator):
         isFlat = params.isFlat
         copyPropObj = params.copyPropertiesCurve
         rgba = params.rgba
+        thickness = params.thickness
+
         if(isFlat): copyPropObj = None
         else: rgba = None
+
         animType = params.animType if not isFlat else OBJTYPE_NONMODIFIER
 
         customWriter = params.customWriter
@@ -953,7 +963,7 @@ class CreateWritingAnimOp(bpy.types.Operator):
 
         textColl = None
         if(hasattr(params, 'animate') and params.animate == 'text'):
-            textColl = createText(context, rgba, copyPropObj)
+            textColl = createText(context, rgba, thickness, copyPropObj)
             alignToVert = False
             animType = OBJTYPE_NONMODIFIER
             retain = 'Copy'
@@ -961,7 +971,7 @@ class CreateWritingAnimOp(bpy.types.Operator):
 
         endFrame = main(retain, DEFAULT_DEPTH, startFrame, totalFrames,
             liftAxis, maxLift, transitionSpeed, alignToVert, proportionalLift, animType,
-                copyPropObj, rgba, customWriter, reverseLift, resetLocation)
+                copyPropObj, rgba, thickness, customWriter, reverseLift, resetLocation)
 
         if(endFrame < 0):
             self.report({'WARNING'}, "No Curve Objects Selected to Create Animation")
@@ -980,7 +990,7 @@ class CreateWritingAnimOp(bpy.types.Operator):
 
         return {'FINISHED'}
 
-def createText(context, rgba, copyPropObj):
+def createText(context, rgba, thickness, copyPropObj):
     stParams = context.window_manager.createWritingAnimParams
 
     fontName = stParams.fontName
@@ -993,7 +1003,7 @@ def createText(context, rgba, copyPropObj):
     #TODO: Why this is needed again?
     from .addstrokefont_2_8.strokefontmain import getFontNames, addText
     collection = addText(fontName, fontSize, charSpacing, wordSpacing, lineSpacing, \
-        copyPropObj, rgba, text, cloneGlyphs = False)
+        copyPropObj, rgba, text, cloneGlyphs = False, bevelDepth = thickness)
 
     for o in bpy.data.objects:
         try:
@@ -1114,6 +1124,7 @@ class CreateWritingAnimPanel(bpy.types.Panel):
 
         if(params.isFlat):
             col.prop(params, "rgba")
+            col.prop(params, "thickness")
         else:
             col.prop(params, "copyPropertiesCurve")
 
