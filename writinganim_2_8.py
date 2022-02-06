@@ -87,7 +87,9 @@ class DrawableCurve:
         newCurveData.render_resolution_u = copyObjData.render_resolution_u
         newCurveData.fill_mode = copyObjData.fill_mode
 
-        newCurveData.use_fill_deform = copyObjData.use_fill_deform
+        if(hasattr(copyObjData,'use_fill_deform')): # discontinued from ver 3.0
+            newCurveData.use_fill_deform = copyObjData.use_fill_deform
+
         newCurveData.use_radius = copyObjData.use_radius
         newCurveData.use_stretch = copyObjData.use_stretch
         newCurveData.use_deform_bounds = copyObjData.use_deform_bounds
@@ -358,9 +360,14 @@ def createPencil(name, co, segs = 12, tipDepth = .1, height = 1, diameter = .033
         return mat
 
     bm = bmesh.new()
-    bmesh.ops.create_cone(bm, cap_ends = True, segments = segs,
-        depth = tipDepth * (100-endTipPerc)/100, diameter1 = endTipDia,
-            diameter2 = diameter)
+    if(bpy.app.version_string.startswith('2')):
+        bmesh.ops.create_cone(bm, cap_ends = True, segments = segs,
+            depth = tipDepth * (100-endTipPerc)/100, diameter1 = endTipDia,
+                diameter2 = diameter)
+    else:
+        bmesh.ops.create_cone(bm, cap_ends = True, segments = segs,
+            depth = tipDepth * (100-endTipPerc)/100, radius1 = endTipDia,
+                radius2 = diameter)
 
     up = Vector((0, 0, 1))
     bm.normal_update()
@@ -380,8 +387,12 @@ def createPencil(name, co, segs = 12, tipDepth = .1, height = 1, diameter = .033
     offsetVerts = [v for i, v in enumerate(topFace.verts) if i % 2 == 0]
     bmesh.ops.translate(bm, vec = (0, 0, sharpCutOffset), verts = offsetVerts)
 
-    info = bmesh.ops.create_cone(bm, cap_ends = True, segments = segs * 2,
-        depth = tipDepth * endTipPerc/100, diameter1 = 0, diameter2 = endTipDia)
+    if(bpy.app.version_string.startswith('2')):
+        info = bmesh.ops.create_cone(bm, cap_ends = True, segments = segs * 2,
+            depth = tipDepth * endTipPerc/100, diameter1 = 0, diameter2 = endTipDia)
+    else:
+        info = bmesh.ops.create_cone(bm, cap_ends = True, segments = segs * 2,
+            depth = tipDepth * endTipPerc/100, radius1 = 0, radius2 = endTipDia)
 
     bmesh.ops.translate(bm, vec = (0, 0, -tipDepth * .5), verts = info['verts'])
 
