@@ -1,10 +1,10 @@
 ![Demo](https://github.com/Shriinivas/etc/blob/master/writinganimation/illustrations/demo.gif)
 # Blender Add-on for Generating Writing Animation<br>
 This add-on generates writing animation for the selected Bezier curves in blender <br><br>
-Supported Blender versions: <b>2.8x</b> and <b>2.79b</b> <br>
+Supported Blender versions: <b>2.8x</b>, <b>3.x</b> and <b>2.79b</b> <br>
 
 # Installation
-<b>To install on 2.8x Blender (this comes integrated with stroke font text animation):<br></b>
+<b>To install on Blender versions 2.8 and above (stroke font text animation comes integrated with this):<br></b>
 - Click on the Code button above the repository list
 - Download the zip file in a local folder
 - Follow the common steps below
