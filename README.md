@@ -1,42 +1,41 @@
 ![Demo](https://github.com/Shriinivas/etc/blob/master/writinganimation/illustrations/demo.gif)
-# Blender Add-on for Generating Writing Animation<br>
-This add-on generates writing animation for the selected Bezier curves in blender <br><br>
-Supported Blender versions: <b>2.8x</b>, <b>3.x</b> and <b>2.79b</b> <br>
+This add-on generates writing animations for selected Bezier curves or text in Blender.
 
-# Installation
-<b>To install on Blender versions 2.8 and above (stroke font text animation comes integrated with this):<br></b>
-- Click on the Code button above the repository list
-- Download the zip file in a local folder
-- Follow the common steps below
+**Supported Blender Versions:** 2.8x and later
 
-<b>To install on 2.79b (this is without stroke font text animation):<br></b>
-- Click on the writinganim.py link
-- Click on the Raw button above the code listing
-- Press control+s to save the file in a local folder
-- Follow the common steps below
+## Installation
 
-<b>Common Steps:</b>
-- Open Blender and select Edit (or File in 2.79b)->Preferences <br>
-- Click install Add-ons tab and then Install Add-on from File<br>
-- Select the downloaded file <br>
-- Check the 'Create Writing Animation' option in the add-ons dialog <br>
+This add-on comes integrated with stroke font text animation.
 
-After installation, a new 'Writing Animation' tab is displayed in object mode. In Blender 2.79 it's on the tools panel, in 2.8  it's on 'Active Tool and Workspace settings' tab on the properties panel.
+1. Click on the **Code** button above the repository list.
+2. Download the zip file to a local folder.
+3. Open Blender and navigate to **Edit -> Preferences**.
+4. In the Preferences window, go to the **Add-ons** tab and click **Install Add-on from File**.
+5. Select the downloaded zip file.
+6. Enable the 'Create Writing Animation' option in the add-ons dialog.
 
-# Quick start
-Select the bezier curves, enter startig frame and length of the animation and click 'Create Writing Animation'<br>
+After installation, a new 'Writing Animation' tab will appear in object mode under 'Active Tool and Workspace settings' on the properties panel.
 
-<a href=https://youtu.be/_tATQJhAkIg> The introductory video</a> provides a detailed overview of the add-on functionality and various options available. Additionally <a href=https://youtu.be/s2BIh-jV8XE>this video tutorial</a> covers a detailed usage example.
+## Quick Start
 
-If you have installed the integrated zip (available only for Blender 2.8), there will be an additional option 'Animate' at the top. Selecting 'Text' in this drop down will display text specific options below. You can enter the text to be animated in the text input box and taylor other option values to create a text writing animation.
+1. Select the Bezier curves.
+2. Enter the starting frame and length of the animation.
+3. Click 'Create Writing Animation'.
+4. Selecting 'Text' in the 'Animate' drop-down, text-specific options will appear. Enter the text you want to animate in the text input box and adjust other option values to create a text writing animation.
 
-Please refer to <a href=https://youtu.be/WZVMPuyfYTM> this video </a> for more details on the automated text writing  animation.
+For a detailed overview of the add-on functionality and various options, watch [this introductory video](https://youtu.be/_tATQJhAkIg). For a detailed usage example, see [this video tutorial](https://youtu.be/s2BIh-jV8XE).
 
-# Limitations
-If you undo the generate animation operation, the eye dropper selections made previously in 'Properties of' and 'Custom Writer'  options do not function consistently. So after undoing, even if these options show some values, you will have to select the corresponding objects once again (if they were selected before undoing).<br><br>
-For curves with modifiers, sometimes the writer and curve are not in sync due to some error in length calculation (root cause still unknown). A workaround for this is to either (a) apply the modifiers on the curve or (b) split the curves into a number of smaller segments (refer to the usage example above) before generating the animation.
+For more details specifically on automated text writing animation, please refer to [this video](https://youtu.be/WZVMPuyfYTM).
 
-Exercise caution when using this add-on in production as it's in alpha stage<br>
+## Limitations
 
-# License
-<a href=https://github.com/Shriinivas/writinganimation/blob/master/LICENSE>MIT</a>
+- **Undo Behavior:** If you undo the generate animation operation, the selections made previously with the eye dropper in 'Properties of' and 'Custom Writer' may not function consistently. After undoing, you will need to reselect the corresponding objects, even if they were selected before undoing.
+- **Modifiers on Curves:** For curves with modifiers, sometimes the writer and curve are not in sync due to errors in length calculation (root cause still unknown). A workaround is to either:
+  - Apply the modifiers on the curve
+  - Split the curves into a number of smaller segments (refer to the usage example above) before generating the animation.
+
+For splitting splines, using the [Bezier Utilities](https://github.com/Shriinivas/blenderbezierutils) add-on is recommended as it is more up-to-date.
+
+## License
+
+[GPL 3.0](./LICENSE)
