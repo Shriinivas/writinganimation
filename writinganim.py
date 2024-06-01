@@ -1,13 +1,4 @@
-#
-# This Blender add-on creates writing animation for the selected Bezier curves
-# Supported Blender Version: 2.8 Beta
-#
-# Copyright (C) 2018  Shrinivas Kulkarni
-#
-# License: GPL (https://github.com/Shriinivas/writinganimation/blob/master/LICENSE)
-#
-
-# Not yet pep8 compliant
+# Author: Shrinivas Kulkarni (khemadeva@gmail.com)
 
 import bpy
 import bmesh
@@ -166,7 +157,7 @@ class DrawableCurve:
             DrawableCurve.copySrcObjProps(curveObj.data, copyData)
             if(flatMat != None):
                 # TODO: Import only once
-                from .addstrokefont_2_8.strokefontmain import copyObjAttr
+                from .addstrokefont.strokefontmain import copyObjAttr
                 copyData.materials.clear()
                 copyData.materials.append(flatMat)
                 for spline in curveObj.data.splines:
@@ -646,7 +637,7 @@ def main(retain, defaultDepth, startFrame, totalFrames,
     bpy.context.scene.collection.children.link(group)
 
     if(isAddTextAvailable() and rgba != None):
-        from .addstrokefont_2_8.strokefontmain import getFlatMat, createCircle, copyObjAttr
+        from .addstrokefont.strokefontmain import getFlatMat, createCircle, copyObjAttr
         flatMat = getFlatMat('Flat Curves Material', rgba)
         bevelObj = createCircle(thickness, group)
     else:
@@ -815,7 +806,7 @@ def main(retain, defaultDepth, startFrame, totalFrames,
 
 def isAddTextAvailable():
     try:
-        from .addstrokefont_2_8.strokefontmain import getfontNameList, addText
+        from .addstrokefont.strokefontmain import getfontNameList, addText
         return True
     except Exception as e:
         print(e)
@@ -910,7 +901,7 @@ class CreateWritingAnimParams(bpy.types.PropertyGroup):
 
     if(isAddTextAvailable()):
         #TODO: Why this is needed two times?
-        from .addstrokefont_2_8.strokefontmain import getfontNameList, addText
+        from .addstrokefont.strokefontmain import getfontNameList, addText
 
         animate : EnumProperty(name="Animate",
             items = [('selCurves', 'Selected Curves', "Create animation for selected curves"), \
@@ -1012,7 +1003,7 @@ def createText(context, rgba, thickness, copyPropObj):
     text = stParams.text
 
     #TODO: Why this is needed again?
-    from .addstrokefont_2_8.strokefontmain import getFontNames, addText
+    from .addstrokefont.strokefontmain import getFontNames, addText
     collection = addText(fontName, fontSize, charSpacing, wordSpacing, lineSpacing, \
         copyPropObj, rgba, text, cloneGlyphs = False, bevelDepth = thickness)
 
