@@ -1022,9 +1022,9 @@ def createText(context, rgba, thickness, copyPropObj):
 
     return collection
 
-class SeparateSplinesObjsOp(bpy.types.Operator):
+class SeparateSplinesObjsOp2(bpy.types.Operator):
 
-    bl_idname = "object.separate_splines"
+    bl_idname = "object.separate_splines2"
     bl_label = "Separate Bezier Splines"
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -1159,7 +1159,7 @@ class CreateWritingAnimPanel(bpy.types.Panel):
 def register():
     bpy.utils.register_class(CreateWritingAnimPanel)
     bpy.utils.register_class(CreateWritingAnimOp)
-    bpy.utils.register_class(SeparateSplinesObjsOp)
+    bpy.utils.register_class(SeparateSplinesObjsOp2)
     bpy.utils.register_class(CreateWritingAnimParams)
     bpy.types.WindowManager.createWritingAnimParams = \
         bpy.props.PointerProperty(type=CreateWritingAnimParams)
@@ -1167,7 +1167,7 @@ def register():
 def unregister():
     bpy.utils.unregister_class(CreateWritingAnimPanel)
     bpy.utils.unregister_class(CreateWritingAnimOp)
-    bpy.utils.unregister_class(SeparateSplinesObjsOp)
+    bpy.utils.unregister_class(SeparateSplinesObjsOp2)
     del bpy.types.WindowManager.createWritingAnimParams
     bpy.utils.unregister_class(CreateWritingAnimParams)
 
